@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -20,6 +21,7 @@ func init() {
 	var err error
 	DefaultTestTimeout, err = time.ParseDuration(timeoutStr)
 	if err != nil {
+		fmt.Printf("Error parsing DEFAULT_TEST_TIMEOUT: %v. Defaulting to 30 seconds.\n", err)
 		DefaultTestTimeout = 30 * time.Second
 	}
 

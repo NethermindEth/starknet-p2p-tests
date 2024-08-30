@@ -3,8 +3,10 @@ package synthetic_node
 import (
 	"context"
 	"crypto/rand"
-	"fmt"
+	"errors"
 	"iter"
+	"log"
+	"os"
 	"starknet-p2p-tests/config"
 	"starknet-p2p-tests/protocol/p2p/starknet"
 	"starknet-p2p-tests/protocol/p2p/starknet/spec"
@@ -22,14 +24,18 @@ import (
 type SyntheticNode struct {
 	Host           host.Host
 	StarknetClient *starknet.Client
-	logger         *utils.TestSimpleLogger
+	logger         utils.SimpleLogger
 	targetPeer     peer.ID
 }
 
-func New(ctx context.Context, logger *utils.TestSimpleLogger) (*SyntheticNode, error) {
+func New(ctx context.Context) (*SyntheticNode, error) {
+	stdLogger := log.New(os.Stdout, "[SYNTHETIC-NODE] ", log.Ldate|log.Ltime|log.Lshortfile)
+	logger := &utils.TestSimpleLogger{Logger: stdLogger.Printf}
+
 	priv, _, err := crypto.GenerateEd25519Key(rand.Reader)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate key: %w", err)
+		logger.Errorw("Failed to generate key", "error", err)
+		return nil, errors.New("failed to generate key")
 	}
 
 	opts := []libp2p.Option{
@@ -39,7 +45,8 @@ func New(ctx context.Context, logger *utils.TestSimpleLogger) (*SyntheticNode, e
 
 	h, err := libp2p.New(opts...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create libp2p node: %w", err)
+		logger.Errorw("Failed to create libp2p node", "error", err)
+		return nil, errors.New("failed to create libp2p node")
 	}
 
 	logger.Infow("Created new synthetic node", "address", h.Addrs(), "id", h.ID())
@@ -53,12 +60,14 @@ func New(ctx context.Context, logger *utils.TestSimpleLogger) (*SyntheticNode, e
 func (sn *SyntheticNode) Connect(ctx context.Context, targetAddress string) error {
 	targetPeerInfo, err := ParsePeerAddress(targetAddress)
 	if err != nil {
-		return fmt.Errorf("failed to parse peer address: %w", err)
+		sn.logger.Errorw("Failed to parse peer address", "error", err, "address", targetAddress)
+		return errors.New("failed to parse peer address")
 	}
 
-	sn.logger.Infow("Connecting to peer: ", "address", targetAddress)
+	sn.logger.Infow("Connecting to peer", "address", targetAddress)
 	if err := sn.Host.Connect(ctx, targetPeerInfo); err != nil {
-		return fmt.Errorf("failed to connect to target peer: %w", err)
+		sn.logger.Errorw("Failed to connect to target peer", "error", err, "address", targetAddress)
+		return errors.New("failed to connect to target peer")
 	}
 
 	sn.targetPeer = targetPeerInfo.ID
@@ -84,14 +93,12 @@ func (sn *SyntheticNode) RequestBlockHeaders(ctx context.Context, startBlock uin
 		Step:      stepValue,
 	}
 
-	sn.logger.Infow("Requesting block headers",
-		"start", startBlock,
-		"limit", limit,
-		"step", stepValue)
+	sn.logger.Infow("Requesting block headers", "start", startBlock, "limit", limit, "step", stepValue)
 
 	headersIt, err := sn.StarknetClient.RequestBlockHeaders(ctx, &spec.BlockHeadersRequest{Iteration: iteration})
 	if err != nil {
-		return nil, fmt.Errorf("failed to request block headers:", err)
+		sn.logger.Errorw("Failed to request block headers", "error", err)
+		return nil, errors.New("failed to request block headers")
 	}
 
 	var headers []*spec.BlockHeadersResponse
@@ -103,10 +110,11 @@ func (sn *SyntheticNode) RequestBlockHeaders(ctx context.Context, startBlock uin
 }
 
 func (sn *SyntheticNode) RequestEvents(ctx context.Context, req *spec.EventsRequest) (iter.Seq[*spec.EventsResponse], error) {
-	sn.logger.Infow("Requesting events: %+v", req)
+	sn.logger.Infow("Requesting events", "request", req)
 	events, err := sn.StarknetClient.RequestEvents(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to request events: %w", err)
+		sn.logger.Errorw("Failed to request events", "error", err)
+		return nil, errors.New("failed to request events")
 	}
 	return events, nil
 }
@@ -122,12 +130,12 @@ func (sn *SyntheticNode) Close() error {
 func ParsePeerAddress(address string) (peer.AddrInfo, error) {
 	maddr, err := multiaddr.NewMultiaddr(address)
 	if err != nil {
-		return peer.AddrInfo{}, fmt.Errorf("invalid multiaddr: %w", err)
+		return peer.AddrInfo{}, errors.New("invalid multiaddr")
 	}
 
 	addrInfo, err := peer.AddrInfoFromP2pAddr(maddr)
 	if err != nil {
-		return peer.AddrInfo{}, fmt.Errorf("invalid peer address: %w", err)
+		return peer.AddrInfo{}, errors.New("invalid peer address")
 	}
 
 	return *addrInfo, nil

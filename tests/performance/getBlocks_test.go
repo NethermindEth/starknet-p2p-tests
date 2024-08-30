@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"starknet-p2p-tests/config"
-	"starknet-p2p-tests/protocol/p2p/utils"
 	synthetic_node "starknet-p2p-tests/tools"
 	"strings"
 	"sync"
@@ -119,8 +118,7 @@ func runPerformanceTest(t *testing.T, peerCount int) LatencyStats {
 }
 
 func simulatePeer(t *testing.T, ctx context.Context, peerIndex, totalPeers int) ([]float64, int, float64, map[string]int) {
-	logger := &utils.TestSimpleLogger{Logger: t.Logf}
-	syntheticNode, err := synthetic_node.New(ctx, logger)
+	syntheticNode, err := synthetic_node.New(ctx)
 	require.NoError(t, err, "Failed to create synthetic node")
 	defer syntheticNode.Close()
 

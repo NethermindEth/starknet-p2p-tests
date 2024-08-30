@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"starknet-p2p-tests/config"
 	"starknet-p2p-tests/protocol/p2p/starknet/spec"
-	"starknet-p2p-tests/protocol/p2p/utils"
 	synthetic_node "starknet-p2p-tests/tools"
 	"testing"
 	"time"
@@ -53,8 +52,7 @@ func runBlockHeaderTest(t *testing.T, tc blockHeaderTestCase) {
 }
 
 func setupSyntheticNode(t *testing.T) (*synthetic_node.SyntheticNode, error) {
-	logger := &utils.TestSimpleLogger{Logger: t.Logf}
-	syntheticNode, err := synthetic_node.New(context.Background(), logger)
+	syntheticNode, err := synthetic_node.New(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create synthetic node: %w", err)
 	}

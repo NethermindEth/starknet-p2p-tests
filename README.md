@@ -2,12 +2,6 @@
 
 This project contains peer-to-peer (P2P) tests for the Starknet network. It is inspired by Ziggurat (https://github.com/runziggurat) but written in Go.
 
-## Overview
-
-Starknet is a permissionless decentralized Validity-Rollup (often referred to as ZK-Rollup). It operates as a Layer 2 network over Ethereum, enabling any dApp to achieve unlimited scale for its computation without compromising Ethereum's composability and security.
-
-This project focuses on testing the peer-to-peer communication aspects of the Starknet network, with a particular emphasis on conformance, performance, and resilience tests.
-
 ## Purpose
 
 The main purposes of these tests are:
@@ -59,25 +53,6 @@ The project uses environment variables for configuration, which are defined in t
 
 [More info](#environment-variables)
 
-## Environment Variables
-
-- `TARGET_PEER_ADDRESS`: The address of the target Starknet node to connect to for testing.
-- `DEFAULT_TEST_TIMEOUT`: The default timeout for tests.
-- `SYNTHETIC_LISTEN_ADDRS`: The listen addresses for the synthetic node.
-- `NETWORK_NAME`: The name of the Starknet network being tested.
-
-## Synthetic Node
-
-The project implements a synthetic node in `tools/synthetic_node.go`. This synthetic node is used to simulate a Starknet node for testing purposes. It provides capabilities such as:
-
-- Connecting to a target Starknet node
-- Requesting block headers
-- ...
-- ...
-- ...
-
-The synthetic node is a key component in our testing infrastructure, allowing us to interact with the Starknet network in a controlled manner.
-
 ## Running Tests
 
 Before running the tests, ensure that your environment is properly configured:
@@ -113,24 +88,6 @@ The following environment variables are available for configuration:
 - `SYNTHETIC_LISTEN_ADDRS`: The listen addresses for the synthetic node (default: "/ip4/0.0.0.0/tcp/0")
 - `NETWORK_NAME`: The name of the Starknet network being tested (default: "sepolia")
 
-You can set these variables in your shell before running the tests to override the default values.
-
-- To run all tests:
-  ```
-  go test ./tests/...
-  ```
-  For verbose output:
-  ```
-  go test -v ./tests/...
-  ```
-
-- To run specific test categories:
-  ```
-  go test ./tests/conformance
-  go test ./tests/performance
-  ```
-
-Note: Some tests may require additional setup or configuration. Please check the output and individual test files for any specific requirements.
 
 Note: For performance tests, you may need to increase the default timeout. Use the -timeout flag, e.g., `go test -timeout 5m ./tests/performance`
 
