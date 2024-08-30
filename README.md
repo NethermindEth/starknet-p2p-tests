@@ -4,7 +4,7 @@ This project contains peer-to-peer (P2P) tests for the Starknet network. It is i
 
 ## Overview
 
-Starknet is a permissionless decentralized Validity-Rollup (often referred to as ZK-Rollup). It operates as a Layer 2 network over Ethereum, enabling any dApp to achieve unlimited scale for its computation � without compromising Ethereum's composability and security.
+Starknet is a permissionless decentralized Validity-Rollup (often referred to as ZK-Rollup). It operates as a Layer 2 network over Ethereum, enabling any dApp to achieve unlimited scale for its computation without compromising Ethereum's composability and security.
 
 This project focuses on testing the peer-to-peer communication aspects of the Starknet network, with a particular emphasis on conformance, performance, and resilience tests.
 
@@ -40,7 +40,7 @@ This project is written in Go and organized as follows:
 
 1. Clone the repository:
    ```
-   git clone https://github.com/your-username/starknet-p2p-tests.git
+   git clone https://github.com/NethermindEth/starknet-p2p-tests.git
    ```
 
 2. Navigate to the project directory:
@@ -55,18 +55,16 @@ This project is written in Go and organized as follows:
 
 ## Configuration
 
-The project uses environment variables for configuration, which are defined in the `config/config.go` file. The main configuration options include:
+The project uses environment variables for configuration, which are defined in the `config/config.go` file. 
+
+[More info](#environment-variables)
+
+## Environment Variables
 
 - `TARGET_PEER_ADDRESS`: The address of the target Starknet node to connect to for testing.
 - `DEFAULT_TEST_TIMEOUT`: The default timeout for tests.
 - `SYNTHETIC_LISTEN_ADDRS`: The listen addresses for the synthetic node.
 - `NETWORK_NAME`: The name of the Starknet network being tested.
-
-To set the target node, you can export the `TARGET_PEER_ADDRESS` environment variable before running the tests:
-
-```
-export TARGET_PEER_ADDRESS="/ip4/your-target-ip/tcp/your-target-port/p2p/your-target-peer-id"
-```
 
 ## Synthetic Node
 
