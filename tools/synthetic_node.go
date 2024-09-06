@@ -12,7 +12,10 @@ import (
 	"starknet-p2p-tests/protocol/p2p/starknet/spec"
 	"starknet-p2p-tests/protocol/p2p/utils"
 
+	"time"
+
 	"github.com/libp2p/go-libp2p"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -25,7 +28,7 @@ type SyntheticNode struct {
 	Host           host.Host
 	StarknetClient *starknet.Client
 	logger         utils.SimpleLogger
-	targetPeer     peer.ID
+	dht            *dht.IpfsDHT
 }
 
 func New(ctx context.Context) (*SyntheticNode, error) {
@@ -41,6 +44,9 @@ func New(ctx context.Context) (*SyntheticNode, error) {
 	opts := []libp2p.Option{
 		libp2p.Identity(priv),
 		libp2p.ListenAddrStrings(config.SyntheticListenAddrs...),
+		libp2p.EnableRelay(),
+		libp2p.EnableHolePunching(),
+		libp2p.NATPortMap(),
 	}
 
 	h, err := libp2p.New(opts...)
@@ -49,11 +55,27 @@ func New(ctx context.Context) (*SyntheticNode, error) {
 		return nil, errors.New("failed to create libp2p node")
 	}
 
-	logger.Infow("Created new synthetic node", "address", h.Addrs(), "id", h.ID())
+	kadDHT, err := dht.New(ctx, h,
+		dht.ProtocolPrefix(starknet.Prefix),
+		dht.BootstrapPeers(),                         ///needed?
+		dht.RoutingTableRefreshPeriod(1*time.Second), //needed?
+		dht.Mode(dht.ModeServer),                     //needed?
+	)
+
+	if err := kadDHT.Bootstrap(ctx); err != nil {
+		logger.Errorw("Failed to bootstrap DHT", "error", err)
+		return nil, errors.New("failed to bootstrap DHT")
+	}
+
+	if err != nil {
+		logger.Errorw("Failed to create DHT", "error", err)
+		return nil, errors.New("failed to create DHT")
+	}
 
 	return &SyntheticNode{
 		Host:   h,
 		logger: logger,
+		dht:    kadDHT,
 	}, nil
 }
 
@@ -70,13 +92,11 @@ func (sn *SyntheticNode) Connect(ctx context.Context, targetAddress string) erro
 		return errors.New("failed to connect to target peer")
 	}
 
-	sn.targetPeer = targetPeerInfo.ID
-	networkInfo := &utils.Network{Name: config.NetworkName}
 	newStreamFunc := func(ctx context.Context, pids ...protocol.ID) (network.Stream, error) {
 		return sn.Host.NewStream(ctx, targetPeerInfo.ID, pids...)
 	}
 
-	sn.StarknetClient = starknet.NewClient(newStreamFunc, networkInfo, sn.logger)
+	sn.StarknetClient = starknet.NewClient(newStreamFunc, &utils.Network{Name: config.NetworkName}, sn.logger)
 	sn.logger.Infow("Successfully connected to peer", "id", targetPeerInfo.ID)
 	return nil
 }
@@ -121,9 +141,7 @@ func (sn *SyntheticNode) RequestEvents(ctx context.Context, req *spec.EventsRequ
 
 func (sn *SyntheticNode) Close() error {
 	sn.logger.Infow("Closing synthetic node")
-	if sn.targetPeer != "" {
-		sn.Host.Network().ClosePeer(sn.targetPeer)
-	}
+
 	return sn.Host.Close()
 }
 
