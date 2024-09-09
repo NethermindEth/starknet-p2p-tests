@@ -118,9 +118,9 @@ func runPerformanceTest(t *testing.T, peerCount int) LatencyStats {
 }
 
 func simulatePeer(t *testing.T, ctx context.Context, peerIndex, totalPeers int) ([]float64, int, float64, map[string]int) {
-	syntheticNode, err := synthetic_node.New(ctx)
+	syntheticNode, err := synthetic_node.New(ctx, t)
 	require.NoError(t, err, "Failed to create synthetic node")
-	defer syntheticNode.Close()
+	// Remove the defer syntheticNode.Close() line, as it's now handled by t.Cleanup()
 
 	connectStart := time.Now()
 	err = syntheticNode.Connect(ctx, config.TargetPeerAddress)

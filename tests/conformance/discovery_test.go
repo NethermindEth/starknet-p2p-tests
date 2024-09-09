@@ -2,49 +2,35 @@ package tests
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"starknet-p2p-tests/config"
 	synthetic_node "starknet-p2p-tests/tools"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+// TestDiscovery tests the discovery functionality between two synthetic nodes.
+// It creates two synthetic nodes, connects them to a target node, and then
+// waits for them to discover each other within a specified timeout.
 func TestDiscovery(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultTestTimeout)
 	defer cancel()
 
-	node1, err := synthetic_node.New(ctx)
+	// Creating synthetic nodes for testing discovery functionality
+	node1, err := synthetic_node.New(ctx, t)
 	require.NoError(t, err)
-	node2, err := synthetic_node.New(ctx)
+	node2, err := synthetic_node.New(ctx, t)
 	require.NoError(t, err)
 
 	// Connect both synthetic nodes to the target node
-	err = node1.Connect(ctx, config.TargetPeerAddress)
-	require.NoError(t, err)
-	err = node2.Connect(ctx, config.TargetPeerAddress)
-	require.NoError(t, err)
+	require.NoError(t, node1.Connect(ctx, config.TargetPeerAddress))
+	require.NoError(t, node2.Connect(ctx, config.TargetPeerAddress))
 
-	fmt.Printf("Node 1 ID: %s\n", node1.Host.ID())
-	fmt.Printf("Node 2 ID: %s\n", node2.Host.ID())
-
-	// Wait for the DHT to work its magic
-	time.Sleep(100 * time.Second)
-
-	peers1 := node1.Host.Peerstore().Peers()
-	peers2 := node2.Host.Peerstore().Peers()
-
-	fmt.Printf("Node 1 peers: %v\n", peers1)
-	fmt.Printf("Node 2 peers: %v\n", peers2)
-
-	assert.Contains(t, peers1, node2.Host.ID(), "Node 1 should have discovered Node 2")
-	assert.Contains(t, peers2, node1.Host.ID(), "Node 2 should have discovered Node 1")
-
-	err = node1.Close()
-	require.NoError(t, err)
-	err = node2.Close()
-	require.NoError(t, err)
+	// Wait for nodes to discover each other
+	require.NoError(t, node1.WaitForPeerDiscovery(ctx, node2.Host.ID(), 10*time.Second),
+		"Node 1 failed to discover Node 2 within the timeout")
+	require.NoError(t, node2.WaitForPeerDiscovery(ctx, node1.Host.ID(), 10*time.Second),
+		"Node 2 failed to discover Node 1 within the timeout")
 }

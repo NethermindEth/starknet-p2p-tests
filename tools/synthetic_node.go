@@ -11,9 +11,11 @@ import (
 	"starknet-p2p-tests/protocol/p2p/starknet"
 	"starknet-p2p-tests/protocol/p2p/starknet/spec"
 	"starknet-p2p-tests/protocol/p2p/utils"
-
 	"time"
 
+	"testing"
+
+	"github.com/avast/retry-go"
 	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/crypto"
@@ -31,7 +33,7 @@ type SyntheticNode struct {
 	dht            *dht.IpfsDHT
 }
 
-func New(ctx context.Context) (*SyntheticNode, error) {
+func New(ctx context.Context, t *testing.T) (*SyntheticNode, error) {
 	stdLogger := log.New(os.Stdout, "[SYNTHETIC-NODE] ", log.Ldate|log.Ltime|log.Lshortfile)
 	logger := &utils.TestSimpleLogger{Logger: stdLogger.Printf}
 
@@ -44,9 +46,6 @@ func New(ctx context.Context) (*SyntheticNode, error) {
 	opts := []libp2p.Option{
 		libp2p.Identity(priv),
 		libp2p.ListenAddrStrings(config.SyntheticListenAddrs...),
-		libp2p.EnableRelay(),
-		libp2p.EnableHolePunching(),
-		libp2p.NATPortMap(),
 	}
 
 	h, err := libp2p.New(opts...)
@@ -57,9 +56,7 @@ func New(ctx context.Context) (*SyntheticNode, error) {
 
 	kadDHT, err := dht.New(ctx, h,
 		dht.ProtocolPrefix(starknet.Prefix),
-		dht.BootstrapPeers(),                         ///needed?
-		dht.RoutingTableRefreshPeriod(1*time.Second), //needed?
-		dht.Mode(dht.ModeServer),                     //needed?
+		dht.Mode(dht.ModeServer),
 	)
 
 	if err := kadDHT.Bootstrap(ctx); err != nil {
@@ -72,11 +69,21 @@ func New(ctx context.Context) (*SyntheticNode, error) {
 		return nil, errors.New("failed to create DHT")
 	}
 
-	return &SyntheticNode{
+	node := &SyntheticNode{
 		Host:   h,
 		logger: logger,
 		dht:    kadDHT,
-	}, nil
+	}
+
+	if t != nil {
+		t.Cleanup(func() {
+			if err := node.Close(); err != nil {
+				t.Logf("Error closing node: %v", err)
+			}
+		})
+	}
+
+	return node, nil
 }
 
 func (sn *SyntheticNode) Connect(ctx context.Context, targetAddress string) error {
@@ -122,7 +129,7 @@ func (sn *SyntheticNode) RequestBlockHeaders(ctx context.Context, startBlock uin
 	}
 
 	var headers []*spec.BlockHeadersResponse
-	for header := range headersIt {
+	for header := range iter.Seq[*spec.BlockHeadersResponse](headersIt) {
 		headers = append(headers, header)
 	}
 	sn.logger.Infow("Received block headers", "count", len(headers))
@@ -157,4 +164,43 @@ func ParsePeerAddress(address string) (peer.AddrInfo, error) {
 	}
 
 	return *addrInfo, nil
+}
+
+func (sn *SyntheticNode) WaitForPeerDiscovery(ctx context.Context, peerID peer.ID, timeout time.Duration) error {
+	start := time.Now()
+
+	err := retry.Do(
+		func() error {
+			if sn.isPeerConnected(peerID) {
+				return nil
+			}
+			return errors.New("peer not connected")
+		},
+		retry.Attempts(uint(timeout/time.Second)),
+		retry.Delay(1*time.Second),
+		retry.DelayType(retry.FixedDelay),
+		retry.Context(ctx),
+	)
+
+	duration := time.Since(start)
+	if err == nil {
+		sn.logger.Infow("Peer discovered", "peerID", peerID, "duration", duration)
+	} else {
+		sn.logger.Warnw("Peer discovery timed out", "peerID", peerID, "timeout", timeout)
+	}
+
+	return err
+}
+
+func (sn *SyntheticNode) isPeerConnected(peerID peer.ID) bool {
+	return sn.Host.Network().Connectedness(peerID) == network.Connected
+}
+
+func (sn *SyntheticNode) contains(peers []peer.ID, id peer.ID) bool {
+	for _, p := range peers {
+		if p == id {
+			return true
+		}
+	}
+	return false
 }
