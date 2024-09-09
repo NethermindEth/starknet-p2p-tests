@@ -33,7 +33,7 @@ type SyntheticNode struct {
 	dht            *dht.IpfsDHT
 }
 
-func New(ctx context.Context, t *testing.T) (*SyntheticNode, error) {
+func New(ctx context.Context, tb testing.TB) (*SyntheticNode, error) {
 	stdLogger := log.New(os.Stdout, "[SYNTHETIC-NODE] ", log.Ldate|log.Ltime|log.Lshortfile)
 	logger := &utils.TestSimpleLogger{Logger: stdLogger.Printf}
 
@@ -75,10 +75,10 @@ func New(ctx context.Context, t *testing.T) (*SyntheticNode, error) {
 		dht:    kadDHT,
 	}
 
-	if t != nil {
-		t.Cleanup(func() {
+	if tb != nil {
+		tb.Cleanup(func() {
 			if err := node.Close(); err != nil {
-				t.Logf("Error closing node: %v", err)
+				tb.Logf("Error closing node: %v", err)
 			}
 		})
 	}
