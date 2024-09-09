@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"starknet-p2p-tests/tests/performance/framework"
 	synthetic_node "starknet-p2p-tests/tools"
 )
 
@@ -18,7 +19,7 @@ const (
 
 func BenchmarkBlockHeaderRequestPerformance(b *testing.B) {
 	peerCounts := []int{1, 5}
-	allResults := make(map[string]LatencyStats)
+	allResults := make(map[string]framework.LatencyStats)
 
 	for _, peerCount := range peerCounts {
 		b.Run(fmt.Sprintf("Peers-%d", peerCount), func(b *testing.B) {
@@ -29,10 +30,10 @@ func BenchmarkBlockHeaderRequestPerformance(b *testing.B) {
 	}
 
 	// Write all results to a file after all tests are complete
-	WriteResultsToFile(b, allResults)
+	framework.WriteResultsToFile(b, allResults)
 }
 
-func runPerformanceTest(b *testing.B, peerCount int) LatencyStats {
+func runPerformanceTest(b *testing.B, peerCount int) framework.LatencyStats {
 	testFunc := func(ctx context.Context, syntheticNode *synthetic_node.SyntheticNode) (time.Duration, error) {
 		start := time.Now()
 		headers, err := syntheticNode.RequestBlockHeaders(ctx, expectedBlockNum, 1)
@@ -45,5 +46,5 @@ func runPerformanceTest(b *testing.B, peerCount int) LatencyStats {
 		return time.Since(start), nil
 	}
 
-	return RunTest(b, peerCount, requestsPerPeer, rampUpTime, responseTimeout, testFunc)
+	return framework.RunTest(b, peerCount, requestsPerPeer, rampUpTime, responseTimeout, testFunc)
 }
