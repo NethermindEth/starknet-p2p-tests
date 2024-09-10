@@ -1,4 +1,4 @@
-name: Run Tests
+name: Run Tests and Benchmarks
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
-    name: Run p2p tests
+  test-and-benchmark:
+    name: Run p2p tests and benchmarks
     runs-on: ubuntu-latest
 
     steps:
@@ -26,8 +26,8 @@ jobs:
     - name: Set TARGET_PEER_ADDRESS environment variable
       run: echo "TARGET_PEER_ADDRESS=/ip4/35.237.66.77/tcp/7777/p2p/12D3KooWR8ikUDiinyE5wgdYiqsdLfJRsBDYKGii6L3oyoipVEaV" >> $GITHUB_ENV
 
-    - name: Run performance tests
-      run: go test -v -timeout 5m ./tests/performance
+    - name: Run performance benchmarks
+      run: go test -v -bench=. -benchtime=1x ./tests/performance
       env:
         TARGET_PEER_ADDRESS: ${{ env.TARGET_PEER_ADDRESS }}
 

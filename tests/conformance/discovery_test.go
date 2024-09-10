@@ -1,4 +1,4 @@
-package tests
+package conformance
 
 import (
 	"context"
@@ -18,7 +18,7 @@ func TestDiscovery(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), config.DefaultTestTimeout)
 	defer cancel()
 
-	// Creating synthetic nodes for testing discovery functionality
+	// Creating synthetic nodes
 	node1, err := synthetic_node.New(ctx, t)
 	require.NoError(t, err)
 	node2, err := synthetic_node.New(ctx, t)

@@ -11,22 +11,37 @@ import (
 	synthetic_node "starknet-p2p-tests/tools"
 )
 
+type PeerStats struct {
+	latencies   []float64
+	successes   int
+	connectTime float64
+	errorCounts map[string]int
+}
+
 type TestFunc func(ctx context.Context, syntheticNode *synthetic_node.SyntheticNode) (time.Duration, error)
 
+// RunTest starts multiple peers, runs the specified test function for each peer,
+// and collects performance statistics. It simulates a specified number of peers
+// making requests to a target node and measures latencies and error rates.
 func RunTest(b *testing.B, peerCount, requestsPerPeer int, rampUpTime, responseTimeout time.Duration, testFunc TestFunc) LatencyStats {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var wg sync.WaitGroup
-	latencies := make([]float64, 0, peerCount*requestsPerPeer)
-	connectTimes := make([]float64, 0, peerCount)
-	var latenciesMutex sync.Mutex
+	var (
+		wg                 sync.WaitGroup
+		peerStatsList      = make([]PeerStats, 0, peerCount) // slice to hold stats for each peer
+		latenciesMutex     sync.Mutex
+		successfulRequests int64
+		totalRequests      = int64(peerCount * requestsPerPeer)
+	)
 
-	var successfulRequests int64
-	totalRequests := int64(peerCount * requestsPerPeer)
-
-	errorCounts := make(map[string]int)
-	var errorCountsMutex sync.Mutex
+	// Helper function to collect stats from each peer
+	collectStats := func(stats PeerStats) {
+		atomic.AddInt64(&successfulRequests, int64(stats.successes))
+		latenciesMutex.Lock()
+		peerStatsList = append(peerStatsList, stats)
+		latenciesMutex.Unlock()
+	}
 
 	b.ResetTimer()
 	startTime := time.Now()
@@ -35,18 +50,9 @@ func RunTest(b *testing.B, peerCount, requestsPerPeer int, rampUpTime, responseT
 		wg.Add(1)
 		go func(peerIndex int) {
 			defer wg.Done()
-			peerLatencies, peerSuccesses, connectTime, peerErrors := simulatePeer(b, ctx, peerIndex, peerCount, requestsPerPeer, responseTimeout, testFunc)
-			atomic.AddInt64(&successfulRequests, int64(peerSuccesses))
-			latenciesMutex.Lock()
-			latencies = append(latencies, peerLatencies...)
-			connectTimes = append(connectTimes, connectTime)
-			latenciesMutex.Unlock()
-
-			errorCountsMutex.Lock()
-			for errType, count := range peerErrors {
-				errorCounts[errType] += count
-			}
-			errorCountsMutex.Unlock()
+			// Simulate peer and collect stats
+			peerStats := simulatePeer(b, ctx, peerIndex, requestsPerPeer, responseTimeout, testFunc)
+			collectStats(peerStats)
 		}(i)
 
 		time.Sleep(rampUpTime / time.Duration(peerCount))
@@ -57,10 +63,24 @@ func RunTest(b *testing.B, peerCount, requestsPerPeer int, rampUpTime, responseT
 
 	b.StopTimer()
 
-	return CalculateStats(latencies, connectTimes, successfulRequests, totalRequests, totalTime, peerCount, errorCounts)
+	// Gather all latencies and error counts from each peer to calculate stats
+	var allLatencies []float64
+	var allErrorCounts = make(map[string]int)
+	var connectTimes []float64
+
+	for _, stats := range peerStatsList {
+		allLatencies = append(allLatencies, stats.latencies...)
+		connectTimes = append(connectTimes, stats.connectTime)
+		for errType, count := range stats.errorCounts {
+			allErrorCounts[errType] += count
+		}
+	}
+
+	return CalculateStats(allLatencies, connectTimes, successfulRequests, totalRequests, totalTime, peerCount, allErrorCounts)
 }
 
-func simulatePeer(b *testing.B, ctx context.Context, peerIndex, totalPeers, requestsPerPeer int, responseTimeout time.Duration, testFunc TestFunc) ([]float64, int, float64, map[string]int) {
+// simulatePeer simulates the behavior of a single peer, collects latencies, and tracks success/error counts.
+func simulatePeer(b *testing.B, ctx context.Context, peerIndex, requestsPerPeer int, responseTimeout time.Duration, testFunc TestFunc) PeerStats {
 	syntheticNode, err := synthetic_node.New(ctx, b)
 	if err != nil {
 		b.Fatalf("Failed to create synthetic node: %v", err)
@@ -93,5 +113,10 @@ func simulatePeer(b *testing.B, ctx context.Context, peerIndex, totalPeers, requ
 		time.Sleep(time.Duration(50+peerIndex*10) * time.Millisecond)
 	}
 
-	return latencies, successfulRequests, connectTime, errorCounts
+	return PeerStats{
+		latencies:   latencies,
+		successes:   successfulRequests,
+		connectTime: connectTime,
+		errorCounts: errorCounts,
+	}
 }

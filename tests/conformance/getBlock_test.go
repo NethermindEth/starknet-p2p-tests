@@ -1,4 +1,4 @@
-package tests
+package conformance
 
 import (
 	"context"
@@ -22,11 +22,11 @@ type blockHeaderTestCase struct {
 
 func TestSyntheticNodeMultipleBlockHeadersRequest(t *testing.T) {
 	testCases := []blockHeaderTestCase{
-		{"Basic Consecutive Blocks", 1, 5, 1},
-		{"Non-unit Step", 1, 5, 2},
-		{"Non-standard Start and Limit", 10, 3, 1},
-		{"Large Step", 1, 5, 10},
-		{"High Start Block", 100, 5, 1},
+		{name: "Basic Consecutive Blocks", startBlock: 1, limit: 5, step: 1},
+		{name: "Non-unit Step", startBlock: 1, limit: 5, step: 2},
+		{name: "Non-standard Start and Limit", startBlock: 10, limit: 3, step: 1},
+		{name: "Large Step", startBlock: 1, limit: 5, step: 10},
+		{name: "High Start Block", startBlock: 100, limit: 5, step: 1},
 	}
 
 	for _, tc := range testCases {
