@@ -11,8 +11,13 @@ import (
 	"starknet-p2p-tests/protocol/p2p/starknet"
 	"starknet-p2p-tests/protocol/p2p/starknet/spec"
 	"starknet-p2p-tests/protocol/p2p/utils"
+	"time"
 
+	"testing"
+
+	"github.com/avast/retry-go"
 	"github.com/libp2p/go-libp2p"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -25,10 +30,10 @@ type SyntheticNode struct {
 	Host           host.Host
 	StarknetClient *starknet.Client
 	logger         utils.SimpleLogger
-	targetPeer     peer.ID
+	dht            *dht.IpfsDHT
 }
 
-func New(ctx context.Context) (*SyntheticNode, error) {
+func New(ctx context.Context, tb testing.TB) (*SyntheticNode, error) {
 	stdLogger := log.New(os.Stdout, "[SYNTHETIC-NODE] ", log.Ldate|log.Ltime|log.Lshortfile)
 	logger := &utils.TestSimpleLogger{Logger: stdLogger.Printf}
 
@@ -49,12 +54,36 @@ func New(ctx context.Context) (*SyntheticNode, error) {
 		return nil, errors.New("failed to create libp2p node")
 	}
 
-	logger.Infow("Created new synthetic node", "address", h.Addrs(), "id", h.ID())
+	kadDHT, err := dht.New(ctx, h,
+		dht.ProtocolPrefix(starknet.Prefix),
+		dht.Mode(dht.ModeServer),
+	)
 
-	return &SyntheticNode{
+	if err := kadDHT.Bootstrap(ctx); err != nil {
+		logger.Errorw("Failed to bootstrap DHT", "error", err)
+		return nil, errors.New("failed to bootstrap DHT")
+	}
+
+	if err != nil {
+		logger.Errorw("Failed to create DHT", "error", err)
+		return nil, errors.New("failed to create DHT")
+	}
+
+	node := &SyntheticNode{
 		Host:   h,
 		logger: logger,
-	}, nil
+		dht:    kadDHT,
+	}
+
+	if tb != nil {
+		tb.Cleanup(func() {
+			if err := node.Close(); err != nil {
+				tb.Logf("Error closing node: %v", err)
+			}
+		})
+	}
+
+	return node, nil
 }
 
 func (sn *SyntheticNode) Connect(ctx context.Context, targetAddress string) error {
@@ -70,13 +99,11 @@ func (sn *SyntheticNode) Connect(ctx context.Context, targetAddress string) erro
 		return errors.New("failed to connect to target peer")
 	}
 
-	sn.targetPeer = targetPeerInfo.ID
-	networkInfo := &utils.Network{Name: config.NetworkName}
 	newStreamFunc := func(ctx context.Context, pids ...protocol.ID) (network.Stream, error) {
 		return sn.Host.NewStream(ctx, targetPeerInfo.ID, pids...)
 	}
 
-	sn.StarknetClient = starknet.NewClient(newStreamFunc, networkInfo, sn.logger)
+	sn.StarknetClient = starknet.NewClient(newStreamFunc, &utils.Network{Name: config.NetworkName}, sn.logger)
 	sn.logger.Infow("Successfully connected to peer", "id", targetPeerInfo.ID)
 	return nil
 }
@@ -102,7 +129,7 @@ func (sn *SyntheticNode) RequestBlockHeaders(ctx context.Context, startBlock uin
 	}
 
 	var headers []*spec.BlockHeadersResponse
-	for header := range headersIt {
+	for header := range iter.Seq[*spec.BlockHeadersResponse](headersIt) {
 		headers = append(headers, header)
 	}
 	sn.logger.Infow("Received block headers", "count", len(headers))
@@ -121,9 +148,7 @@ func (sn *SyntheticNode) RequestEvents(ctx context.Context, req *spec.EventsRequ
 
 func (sn *SyntheticNode) Close() error {
 	sn.logger.Infow("Closing synthetic node")
-	if sn.targetPeer != "" {
-		sn.Host.Network().ClosePeer(sn.targetPeer)
-	}
+
 	return sn.Host.Close()
 }
 
@@ -139,4 +164,43 @@ func ParsePeerAddress(address string) (peer.AddrInfo, error) {
 	}
 
 	return *addrInfo, nil
+}
+
+func (sn *SyntheticNode) WaitForPeerDiscovery(ctx context.Context, peerID peer.ID, timeout time.Duration) error {
+	start := time.Now()
+
+	err := retry.Do(
+		func() error {
+			if sn.isPeerConnected(peerID) {
+				return nil
+			}
+			return errors.New("peer not connected")
+		},
+		retry.Attempts(uint(timeout/time.Second)),
+		retry.Delay(1*time.Second),
+		retry.DelayType(retry.FixedDelay),
+		retry.Context(ctx),
+	)
+
+	duration := time.Since(start)
+	if err == nil {
+		sn.logger.Infow("Peer discovered", "peerID", peerID, "duration", duration)
+	} else {
+		sn.logger.Warnw("Peer discovery timed out", "peerID", peerID, "timeout", timeout)
+	}
+
+	return err
+}
+
+func (sn *SyntheticNode) isPeerConnected(peerID peer.ID) bool {
+	return sn.Host.Network().Connectedness(peerID) == network.Connected
+}
+
+func (sn *SyntheticNode) contains(peers []peer.ID, id peer.ID) bool {
+	for _, p := range peers {
+		if p == id {
+			return true
+		}
+	}
+	return false
 }
