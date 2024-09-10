@@ -23,8 +23,15 @@ jobs:
     - name: Install dependencies
       run: go mod download
 
+    - name: Set TARGET_PEER_ADDRESS environment variable
+      run: echo "TARGET_PEER_ADDRESS=/ip4/127.0.0.1/tcp/7777/p2p/12D3KooWLBUjEPyTiACzQZ3K1oqBXRqHwRFvAUHrm561pWWbJkYf" >> $GITHUB_ENV
+
     - name: Run performance tests
       run: go test -v -timeout 5m ./tests/performance
+      env:
+        TARGET_PEER_ADDRESS: ${{ env.TARGET_PEER_ADDRESS }}
 
     - name: Run conformance tests
       run: go test -v ./tests/conformance
+      env:
+        TARGET_PEER_ADDRESS: ${{ env.TARGET_PEER_ADDRESS }}
