@@ -1,0 +1,37 @@
+name: Run Tests and Benchmarks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-benchmark:
+    name: Run p2p tests and benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
+
+    - name: Install dependencies
+      run: go mod download
+
+    - name: Set TARGET_PEER_ADDRESS environment variable
+      run: echo "TARGET_PEER_ADDRESS=/ip4/35.237.66.77/tcp/7777/p2p/12D3KooWR8ikUDiinyE5wgdYiqsdLfJRsBDYKGii6L3oyoipVEaV" >> $GITHUB_ENV
+
+    - name: Run performance benchmarks
+      run: go test -v -bench=. -benchtime=1x ./tests/performance
+      env:
+        TARGET_PEER_ADDRESS: ${{ env.TARGET_PEER_ADDRESS }}
+
+    - name: Run conformance tests
+      run: go test -v ./tests/conformance
+      env:
+        TARGET_PEER_ADDRESS: ${{ env.TARGET_PEER_ADDRESS }}
