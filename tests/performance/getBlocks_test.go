@@ -35,6 +35,19 @@ func BenchmarkBlockHeaderRequestPerformance(b *testing.B) {
 	b.Cleanup(func() {
 		framework.WriteResultsToFile(b, allResults)
 	})
+
+	// After collecting allResults
+	// Display results in a table format in the logs
+	fmt.Println("Benchmark Results:")
+	fmt.Printf("%-10s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s %-12s\n",
+		"PeerCount", "MinLatency", "MaxLatency", "MeanLatency", "MedianLatency",
+		"P95Latency", "TotalTime", "SuccessRate", "Throughput", "AvgConnectTime", "Errors")
+	for _, stats := range allResults { // Changed from 'for label, stats' to 'for _, stats'
+		fmt.Printf("%-10d %-12.2f %-12.2f %-12.2f %-12.2f %-12.2f %-12.2f %-12.2f %-12.2f %-17.2f %v\n",
+			stats.PeerCount, stats.MinLatency, stats.MaxLatency, stats.MeanLatency,
+			stats.MedianLatency, stats.P95Latency, stats.TotalTime, stats.SuccessRate,
+			stats.Throughput, stats.AvgConnectTime, stats.ErrorCounts)
+	}
 }
 
 // requestBlockHeaders sends a request to fetch block headers and measures the latency.
