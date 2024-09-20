@@ -22,4 +22,6 @@ jobs:
         run: |
           cd e2e
           kurtosis run . --main-function-name run_juno_to_juno_sync --enclave juno-to-juno-enclave
+          kurtosis clean --all
           kurtosis run . --main-function-name run_juno_from_pathfinder_sync --enclave juno-from-pathfinder-enclave
+          kurtosis clean --all
