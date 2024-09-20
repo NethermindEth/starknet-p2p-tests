@@ -1,7 +1,7 @@
 base = import_module("./base.star")
 
 def run(plan, name, participant):
-    image = participant.get("image", "nethermindeth/juno")
+    image = participant.get("image", "nethermindeth/juno:latest-p2p")
     is_feeder = participant.get("is_feeder", False)
     private_key = participant.get("private_key", "")
     http_port = participant.get("http_port", 6060)

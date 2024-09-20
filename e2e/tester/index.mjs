@@ -1,7 +1,8 @@
 import { RpcProvider } from "starknet";
 
-const base = new RpcProvider({ nodeUrl: process.argv[2] });
-const syncing = new RpcProvider({ nodeUrl: process.argv[3] });
+const node = new RpcProvider({ nodeUrl: process.argv[2] });
+const timeout = parseInt(process.argv[3], 10);
+const targetBlockNumber = parseInt(process.argv[4], 10);
 
 function log(message) {
     console.log(message);
@@ -10,37 +11,56 @@ function log(message) {
     }
 }
 
-async function syncNode(targetBlockNumber = 10) {
+async function waitForNodeReady(maxAttempts = 30, interval = 10000) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+            await node.getBlockLatestAccepted();
+            log("Node is ready.");
+            return true;
+        } catch (error) {
+            log(`Waiting for node to be ready... (Attempt ${attempt + 1}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, interval));
+        }
+    }
+    log("Node failed to become ready in time.");
+    return false;
+}
+
+async function syncNode() {
     log(`Syncing to target block: ${targetBlockNumber}`);
+
+    const nodeReady = await waitForNodeReady();
+    if (!nodeReady) {
+        process.exit(1);
+    }
+
+    const startTime = Date.now();
 
     const timer = setInterval(async () => {
         try {
-            const syncingBlock = await syncing.getBlockLatestAccepted();
-            log(`Current syncing block: ${syncingBlock.block_number}`);
+            const currentBlock = await node.getBlockLatestAccepted();
+            log(`Current syncing block: ${currentBlock.block_number}`);
             
-            if (syncingBlock.block_number >= targetBlockNumber) {
+            if (currentBlock.block_number >= targetBlockNumber) {
                 log(`Syncing node has reached or surpassed the target block ${targetBlockNumber}.`);
                 log("Sync successful. Stopping checks.");
                 clearInterval(timer);
                 process.exit(0);
             }
+
+            if (Date.now() - startTime > timeout * 1000) {
+                log(`Timeout of ${timeout} seconds reached. Sync unsuccessful.`);
+                clearInterval(timer);
+                process.exit(1);
+            }
         } catch (error) {
             log(`Error during sync check: ${error.message}`);
-            clearInterval(timer);
-            process.exit(1);
+            // Instead of exiting immediately, we'll continue the loop
         }
     }, 10000);
-
-    // Set a timeout of 3 hours
-    setTimeout(() => {
-        log("Stopping automatic checks after 3h. Marking as failure due to timeout.");
-        clearInterval(timer);
-        process.exit(1);
-    }, 3 * 60 * 60 * 1000);
 }
 
-// Call syncNode with the target block number (default is 1000)
 syncNode().catch(error => {
-    log(`Error occurred: ${error.message}`);
+    log(`Unhandled error occurred: ${error.message}`);
     process.exit(1);
 });

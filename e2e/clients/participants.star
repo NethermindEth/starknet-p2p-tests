@@ -1,6 +1,5 @@
 juno = import_module("./juno.star")
-#papyrus = import_module("./papyrus.star")
-#pathfinder = import_module("./pathfinder.star")
+pathfinder = import_module("./pathfinder.star")
 
 def run_participant(plan, name, participant):
     module = import_module("./{}.star".format(participant["type"]))
