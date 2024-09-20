@@ -71,6 +71,3 @@ def run_juno_from_pathfinder_sync(plan):
 
     plan.print("Juno from Pathfinder sync test completed")
 
-def run_all_sync_tests(plan):
-    run_juno_to_juno_sync(plan)
-    run_juno_from_pathfinder_sync(plan)

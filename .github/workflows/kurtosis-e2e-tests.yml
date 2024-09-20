@@ -11,7 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Kurtosis Tests
+
+      - name: Run Juno to Juno Sync Test
         uses: kurtosis-tech/kurtosis-github-action@v1
         with:
-          path: './e2e' 
+          path: './e2e'
+          args: '--main-function-name run_juno_to_juno_sync --enclave juno-to-juno-enclave'
+
+      - name: Run Juno from Pathfinder Sync Test
+        uses: kurtosis-tech/kurtosis-github-action@v1
+        with:
+          path: './e2e'
+          args: '--main-function-name run_juno_from_pathfinder_sync --enclave juno-from-pathfinder-enclave'
