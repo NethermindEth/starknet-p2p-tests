@@ -12,14 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Juno to Juno Sync Test
-        uses: kurtosis-tech/kurtosis-github-action@v1
-        with:
-          path: './e2e'
-          args: '--main-function-name run_juno_to_juno_sync --enclave juno-to-juno-enclave'
+      - name: Install Kurtosis CLI
+        run: |
+          echo "deb [trusted=yes] https://apt.fury.io/kurtosis-tech/ /" | sudo tee /etc/apt/sources.list.d/kurtosis.list
+          sudo apt update
+          sudo apt install kurtosis-cli
 
-      - name: Run Juno from Pathfinder Sync Test
-        uses: kurtosis-tech/kurtosis-github-action@v1
-        with:
-          path: './e2e'
-          args: '--main-function-name run_juno_from_pathfinder_sync --enclave juno-from-pathfinder-enclave'
+      - name: Run Kurtosis Tests
+        run: |
+          cd e2e
+          kurtosis run . --main-function-name run_juno_to_juno_sync --enclave juno-to-juno-enclave
+          kurtosis run . --main-function-name run_juno_from_pathfinder_sync --enclave juno-from-pathfinder-enclave
