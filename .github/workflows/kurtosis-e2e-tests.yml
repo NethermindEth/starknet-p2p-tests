@@ -25,3 +25,5 @@ jobs:
           kurtosis clean --all
           kurtosis run . --main-function-name run_juno_from_pathfinder_sync --enclave juno-from-pathfinder-enclave
           kurtosis clean --all
+          kurtosis run . --main-function-name run_pathfinder_from_pathfinder_sync --enclave pathfinder-from-pathfinder-enclave
+          kurtosis clean --all

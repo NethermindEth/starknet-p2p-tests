@@ -10,7 +10,6 @@ def run(plan, name, participant):
    
     cmd = [
         "--network", "sepolia-testnet",
-        "--p2p.identity-config-file", "/app/pathfinder_identity.json",
         "--p2p.listen-on", "/ip4/0.0.0.0/tcp/" + str(p2p_port),
         "--debug.restart-delay", "5",
         "--debug.pretty-log", "true",
@@ -18,8 +17,15 @@ def run(plan, name, participant):
         "--ethereum.url", ethereum_url
     ]
 
+    files = {}
     if is_feeder:
-        cmd.extend(["--p2p.proxy", "true"])
+        # Upload the identity file to the enclave only for feeder nodes
+        identity_artifact = plan.upload_files(src="pathfinder_identity.json", name="pathfinder_identity")
+        files["/app/"] = identity_artifact
+        cmd.extend([
+            "--p2p.identity-config-file", "/app/pathfinder_identity.json",
+            "--p2p.proxy", "true"
+        ])
 
     for peer_multiaddr in peer_multiaddrs:
         cmd.extend(["--p2p.bootstrap-addresses", peer_multiaddr])
@@ -34,14 +40,6 @@ def run(plan, name, participant):
             transport_protocol="TCP",
             application_protocol="http",
         )
-    }
-    
-    # Upload the identity file to the enclave
-    identity_artifact = plan.upload_files(src="pathfinder_identity.json", name="pathfinder_identity")
-
-    # Prepare the files parameter for the service
-    files = {
-        "/app/": identity_artifact
     }
 
     return base.run(plan, name, image, cmd, ports, participant, files=files)
