@@ -1,0 +1,74 @@
+# .github/workflows/run-pathfinder-nodes.yml
+
+name: Run Pathfinder Nodes
+
+on:
+  push:
+    branches:
+      - p2p-e2e-tests
+
+jobs:
+  run-pathfinder-nodes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Network
+        run: docker network create pathfinder-network
+
+      - name: Create Necessary Directories
+        run: |
+          mkdir -p feeder_data
+          mkdir -p peer_data
+
+      - name: Create pathfinder_identity.json
+        run: echo '{"private_key":"CAESQArAo83bMrNgftGfokSJ0XcP26bgn6WL3vXUhqUR8BbVVPsL0F/dGWu+VZPcnP3DhH24s5EaHVOinqv2BEkbfdc=","peer_id":"12D3KooWFY6SaqJkRxJDepwvBi4Rw36iMUGZrejW69qkjYQQ2ydQ"}' > pathfinder_identity.json
+
+      - name: Run Feeder Node
+        run: |
+          docker run -d \
+            --name feeder-node \
+            --network pathfinder-network \
+            -p 20002:20002 \
+            -p 9545:9545 \
+            -v $(pwd)/pathfinder_identity.json:/app/pathfinder_identity.json \
+            -v $(pwd)/feeder_data:/var/lib/pathfinder \
+            eqlabs/pathfinder:latest-p2p \
+            --network sepolia-testnet \
+            --p2p.listen-on /ip4/0.0.0.0/tcp/20002 \
+            --debug.restart-delay 5 \
+            --debug.pretty-log true \
+            --rpc.enable true \
+            --ethereum.url wss://sepolia.infura.io/ws/v3/2ba63046038749aeadc99d0520cdaecb \
+            --p2p.identity-config-file /app/pathfinder_identity.json \
+            --p2p.proxy true
+
+      - name: Wait for Nodes to Initialize
+        run: sleep 180
+
+      - name: Run Peer Node
+        run: |
+          docker run -d \
+            --name peer-node \
+            --network pathfinder-network \
+            -p 20003:20002 \
+            -p 9546:9545 \
+            -v $(pwd)/peer_data:/var/lib/pathfinder \
+            eqlabs/pathfinder:latest-p2p \
+            --network sepolia-testnet \
+            --p2p.listen-on /ip4/0.0.0.0/tcp/20002 \
+            --debug.restart-delay 5 \
+            --debug.pretty-log true \
+            --rpc.enable true \
+            --ethereum.url wss://sepolia.infura.io/ws/v3/2ba63046038749aeadc99d0520cdaecb \
+            --p2p.bootstrap-addresses /ip4/0.0.0.0/tcp/20002/p2p/12D3KooWFY6SaqJkRxJDepwvBi4Rw36iMUGZrejW69qkjYQQ2ydQ
+
+      - name: Wait for Nodes to Initialize
+        run: sleep 600
+
+      - name: Display Peer Node Logs
+        run: docker logs peer-node
+
+      - name: Display Feeder Node Logs
+        run: docker logs feeder-node
