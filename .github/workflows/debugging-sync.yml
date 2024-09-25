@@ -20,42 +20,8 @@ jobs:
           mkdir -p peer_data
           echo '{"private_key":"CAESQArAo83bMrNgftGfokSJ0XcP26bgn6WL3vXUhqUR8BbVVPsL0F/dGWu+VZPcnP3DhH24s5EaHVOinqv2BEkbfdc=","peer_id":"12D3KooWFY6SaqJkRxJDepwvBi4Rw36iMUGZrejW69qkjYQQ2ydQ"}' > pathfinder_identity.json
 
-      - name: Set up Docker Compose
-        run: |
-          echo 'version: "3"
-          services:
-            feeder-node:
-              image: eqlabs/pathfinder:latest-p2p
-              container_name: feeder-node
-              volumes:
-                - ./pathfinder_identity.json:/app/pathfinder_identity.json
-              command: >
-                --network sepolia-testnet
-                --p2p.listen-on /ip4/0.0.0.0/tcp/20002
-                --debug.restart-delay 5
-                --debug.pretty-log true
-                --rpc.enable true
-                --ethereum.url wss://sepolia.infura.io/ws/v3/2ba63046038749aeadc99d0520cdaecb
-                --p2p.identity-config-file /app/pathfinder_identity.json
-                --p2p.proxy true
-
-            peer-node:
-              image: eqlabs/pathfinder:latest-p2p
-              container_name: peer-node
-              volumes:
-                - ./peer_data:/var/lib/pathfinder
-              command: >
-                --network sepolia-testnet
-                --p2p.listen-on /ip4/0.0.0.0/tcp/20003
-                --debug.restart-delay 5
-                --debug.pretty-log true
-                --rpc.enable true
-                --ethereum.url wss://sepolia.infura.io/ws/v3/2ba63046038749aeadc99d0520cdaecb
-                --p2p.bootstrap-addresses /dns4/feeder-node/tcp/20002/p2p/12D3KooWFY6SaqJkRxJDepwvBi4Rw36iMUGZrejW69qkjYQQ2ydQ
-          ' > docker-compose.yml
-
       - name: Run Docker Compose
-        run: docker-compose up -d
+        run: docker compose up -d
 
       - name: Wait for Nodes to Initialize
         run: sleep 600
