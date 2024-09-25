@@ -1,0 +1,2 @@
+name: "github.com/nethermindeth/starknet-p2p-tests/e2e"
+description: End-to-end tests for Starknet node synchronization and P2P communication between different implementations (Papyrus, Pathfinder, Juno, and Deoxys)
