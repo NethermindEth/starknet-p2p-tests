@@ -11,18 +11,82 @@ The main purposes of these tests are:
 3. To identify and address any potential issues or vulnerabilities in the P2P layer.
 4. To assess the conformance, performance, and resilience of the Starknet P2P network.
 
-## Project Structure
+## Test Case List & Coverage
 
-This project is written in Go and organized as follows:
+The project outlines the following test cases, based on the protocols described in the [Starknet p2p spec](https://github.com/starknet-io/starknet-p2p-specs/blob/main/p2p/proto/protocols.md#protocols-briefing). These are intended to guide the development of comprehensive tests:
 
-- `tests/`: Contains all test files
-  - `conformance/`: Conformance tests
-  - `performance/`: Performance tests
-  - `resilience/`: Resilience tests (to be implemented)
-- `config/`: Contains configuration files
-  - `config.go`: Defines configuration options and environment variables
-- `tools/`: Contains utility tools
-  - `synthetic_node.go`: Implements the synthetic node for testing
+### Conformance Tests
+
+- **Headers Protocol** (`/starknet/headers/0.1.0-rc.0`):
+  - Requesting block headers with valid parameters. ✅
+  - Handling invalid or malformed `BlockHeadersRequest` messages. ✅
+  - Requesting headers for non-existent blocks. ✅
+  - Testing step and limit parameters in header requests. ✅
+  - Validating the consistency of returned block headers.
+
+- **StateDiffs Protocol** (`/starknet/state_diffs/0.1.0-rc.0`):
+  - Fetching state diffs for specific block ranges.
+  - Handling requests with invalid block numbers or hashes.
+  - Verifying the integrity and correctness of `StateDiffsResponse`.
+  - Testing response to requests for future blocks.
+
+- **Classes Protocol** (`/starknet/classes/0.1.0-rc.0`):
+  - Retrieving class definitions using valid class hashes.
+  - Handling requests with unknown or invalid class hashes.
+  - Validating the structure and content of `ClassesResponse`.
+  - Testing responses to duplicate requests.
+
+- **Transactions Protocol** (`/starknet/transactions/0.1.0-rc.0`):
+  - Requesting transactions by block number, block hash, and transaction hash.
+  - Handling invalid transaction requests or unknown identifiers.
+  - Verifying support for all transaction types.
+  - Testing batch transaction retrieval.
+
+- **Events Protocol** (`/starknet/events/0.1.0-rc.0`):
+  - Subscribing to events with valid filters.
+  - Handling invalid subscription requests.
+  - Receiving and validating event data streams.
+  - Testing unsubscription and cleanup procedures.
+
+- **Kademlia (Discovery) Protocol** (`/starknet/kad/<chain_id>/1.0.0`):
+  - Discovering peers using Kademlia routing. ✅
+
+- **Identify Protocol** (`/ipfs/id/1.0.0`):
+  - Retrieving peer identification information.
+  - Validating protocol versions and agent strings.
+  - Handling malformed or unexpected identify responses.
+  - Testing compatibility with different node implementations.
+
+### Performance Tests
+
+- **Headers Protocol**:
+  - Benchmarking header retrieval for large block ranges.
+  - Measuring latency and throughput under high request rates.
+  - Testing performance impact of varying `step` and `limit` parameters.
+
+- **StateDiffs Protocol**:
+  - Assessing performance when fetching large state diffs.
+  - Evaluating resource usage during intensive state diff requests.
+  - Testing concurrency handling with multiple simultaneous requests.
+
+- **Transactions Protocol**:
+  - Evaluating transaction retrieval under high load.
+  - Measuring response times for bulk transaction requests.
+  - Testing scalability with increasing transaction history.
+
+### Resilience Tests
+
+- **Protocol Version Mismatch**:
+  - Testing interactions between nodes running different protocol versions.
+  - Validating proper negotiation and graceful degradation.
+
+- **Malicious Input Handling**:
+  - Sending malformed or malicious messages to test security.
+  - Observing node responses to potential attack vectors.
+
+- **Resource Limits**:
+  - Testing node behavior under resource constraints (e.g., memory, CPU).
+  - Assessing recovery from resource exhaustion scenarios.
 
 ## Getting Started
 
@@ -91,21 +155,6 @@ The following environment variables are available for configuration:
 
 Note: For performance tests, you may need to increase the default timeout. Use the -timeout flag, e.g., `go test -timeout 5m ./tests/performance`
 
-## Test Cases
-
-The project currently includes the following test cases:
-
-1. Conformance Tests:
-   - `getBlock_test.go`: Tests the conformance of the getBlock functionality.
-   - ...
-   - ...
-   - ...
-2. Performance Tests:
-   - `getBlocks_test.go`: Evaluates the performance of retrieving multiple blocks.
-   - ...
-   - ...
-   - ...
-
 ## Sample Test Output
 
 ```
@@ -129,4 +178,5 @@ The project currently includes the following test cases:
     getBlock_test.go:113: Block Number: 5, Time: 2023-11-20 12:08:02 +0000 UTC, Protocol Version: 0.12.3
     getBlock_test.go:95: Received Fin message at position 5
     utils.go:34: INFO: Closing synthetic node
+
 ```
