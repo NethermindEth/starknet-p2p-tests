@@ -130,12 +130,3 @@ The project currently includes the following test cases:
     getBlock_test.go:95: Received Fin message at position 5
     utils.go:34: INFO: Closing synthetic node
 ```
-## Contributing
-
-We welcome contributions to improve and expand these tests. Please read our contributing guidelines before submitting pull requests.
-
-
-
-## Contact
-
-For any questions or concerns regarding these Starknet P2P tests written in Go, please open an issue in this repository.
