@@ -25,7 +25,7 @@ jobs:
       run: go mod download
 
     - name: Set TARGET_PEER_ADDRESS environment variable
-      run: echo "TARGET_PEER_ADDRESS=/ip4/35.237.66.77/tcp/7777/p2p/12D3KooWR8ikUDiinyE5wgdYiqsdLfJRsBDYKGii6L3oyoipVEaV" >> $GITHUB_ENV
+      run: echo "TARGET_PEER_ADDRESS=/ip4/35.231.95.227/tcp/7777/p2p/12D3KooWNKz9BJmyWVFUnod6SQYLG4dYZNhs3GrMpiot63Y1DLYS" >> $GITHUB_ENV
 
     - name: Run performance benchmarks
       working-directory: ./integration/tests/performance
