@@ -1,0 +1,36 @@
+version: '3'
+services:
+  feeder-node:
+    image: eqlabs/pathfinder:latest-p2p
+    container_name: feeder-node
+    volumes:
+      - ./pathfinder_identity.json:/app/pathfinder_identity.json
+    command: >
+      --network sepolia-testnet
+      --p2p.listen-on /ip4/0.0.0.0/tcp/20002
+      --debug.restart-delay 5
+      --debug.pretty-log true
+      --rpc.enable true
+      --ethereum.url wss://sepolia.infura.io/ws/v3/2ba63046038749aeadc99d0520cdaecb
+      --p2p.identity-config-file /app/pathfinder_identity.json
+      --p2p.proxy true
+    ports:
+      - "20002:20002"
+      - "9545:9545"
+
+  peer-node:
+    image: eqlabs/pathfinder:latest-p2p
+    container_name: peer-node
+    volumes:
+      - ./peer_data:/var/lib/pathfinder
+    command: >
+      --network sepolia-testnet
+      --p2p.listen-on /ip4/0.0.0.0/tcp/20003
+      --debug.restart-delay 5
+      --debug.pretty-log true
+      --rpc.enable true
+      --ethereum.url wss://sepolia.infura.io/ws/v3/2ba63046038749aeadc99d0520cdaecb
+      --p2p.bootstrap-addresses /dns4/feeder-node/tcp/20002/p2p/12D3KooWFY6SaqJkRxJDepwvBi4Rw36iMUGZrejW69qkjYQQ2ydQ
+    ports:
+      - "20003:20003"
+      - "9546:9545"
