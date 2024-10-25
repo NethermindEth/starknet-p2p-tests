@@ -7,6 +7,7 @@ def run(plan):
         "is_feeder": True,
         "private_key": "67f8eae550a5265238431d719c2b62163011ab2a3f2ebeee3bc8f3135e2e2500b9e2c2e9e4ebeea82cca787094d74ab6fcae8ec0367e866dc1130de89e37150b",
         "http_port": 6060,
+        "network": "sepolia"
     })
 
     # Run the Pathfinder node with the juno node as a peer
