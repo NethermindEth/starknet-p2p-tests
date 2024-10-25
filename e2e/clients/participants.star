@@ -1,9 +1,13 @@
-juno = import_module("./juno.star")
-pathfinder = import_module("./pathfinder.star")
+juno = import_module("./juno/client.star")
+pathfinder = import_module("./pathfinder/client.star")
 
 def run_participant(plan, name, participant):
-    module = import_module("./{}.star".format(participant["type"]))
-    return module.run(plan, name, participant)
+    if participant["type"] == "juno":
+        return juno.run(plan, name, participant)
+    elif participant["type"] == "pathfinder":
+        return pathfinder.run(plan, name, participant)
+    else:
+        fail("Unknown client type: " + participant["type"])
 
 def run(plan, participants):
     return [run_participant(plan, "{}-{}".format(participant["type"], index), participant) for (index, participant) in enumerate(participants)]
