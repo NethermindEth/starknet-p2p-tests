@@ -11,3 +11,7 @@ This repository contains integration and e2e tests for the Starknet P2P. These t
 ## Running Tests
 
 To run the tests, navigate to the respective `README.md` files in the `integration/` and `e2e/` directories for detailed instructions.
+
+## License
+
+This project is licensed under the Apache License, Version 2.0 - see the [LICENSE](LICENSE) file for details.
