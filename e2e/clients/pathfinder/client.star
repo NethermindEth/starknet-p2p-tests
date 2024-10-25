@@ -1,4 +1,4 @@
-base = import_module("./base.star")
+base = import_module("../common/base.star")
 
 def run(plan, name, participant):
     image = participant.get("image", "eqlabs/pathfinder:latest-p2p")
@@ -19,11 +19,10 @@ def run(plan, name, participant):
 
     files = {}
     if is_feeder:
-        # Upload the identity file to the enclave only for feeder nodes
-        identity_artifact = plan.upload_files(src="pathfinder_identity.json", name="pathfinder_identity")
+        identity_artifact = plan.upload_files(src="identity.json", name="pathfinder_identity")
         files["/app/"] = identity_artifact
         cmd.extend([
-            "--p2p.identity-config-file", "/app/pathfinder_identity.json",
+            "--p2p.identity-config-file", "/app/identity.json",
             "--p2p.proxy", "true"
         ])
 
