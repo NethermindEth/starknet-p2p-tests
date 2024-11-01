@@ -4,7 +4,7 @@ This project contains end-to-end (E2E) tests for peer-to-peer (P2P) syncing with
 
 | From \ To  | Juno | Pathfinder | Papyrus | Madara |
 |------------|------|------------|---------|--------|
-| Juno       | ✅    | ❌         | ❌      | ❌     |
+| Juno       | ✅    | ✅         | ❌      | ❌     |
 | Pathfinder | ❌    | ❌         | ❌      | ❌     |
 | Papyrus    | ❌    | ❌         | ❌      | ❌     |
 | Madara     | ❌    | ❌         | ❌      | ❌     |

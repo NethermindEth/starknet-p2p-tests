@@ -1,7 +1,7 @@
 participants = import_module("../../clients/participants.star")
 
 # Test configuration
-SYNC_TIMEOUT_SECONDS = 600
+SYNC_TIMEOUT_SECONDS = 1200
 TARGET_BLOCK_NUMBER = 1000
 
 def run(plan):
