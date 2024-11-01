@@ -1,11 +1,12 @@
 participants = import_module("../../clients/participants.star")
+sync_utils = import_module("./sync_test_utils.star")
 
 # Test configuration
-SYNC_TIMEOUT_SECONDS = 1200
+SYNC_TIMEOUT_SECONDS = 1800
 TARGET_BLOCK_NUMBER = 1000
 
 def run(plan):
-    # Run the Pathfinder feeder node
+    # Run the Pathfinder as feeder node
     feeder_node = participants.run_participant(plan, "pathfinder-feeder", {
         "type": "pathfinder",
         "is_feeder": True,
@@ -22,20 +23,5 @@ def run(plan):
         "network": "sepolia",
     })
 
-    tester_image = plan.add_service(
-        "sync-tester",
-        config=ServiceConfig(
-            image=ImageBuildSpec(
-                image_name="sync-test",
-                build_context_dir="./../../tester",
-            ),
-        )
-    )
-
-    # Run the tester
-    plan.print("Starting the sync tester...")
-    plan.exec(tester_image.name, ExecRecipe(
-        ["node", "index.mjs", "http://" + peer_node.ip_address + ":6061", str(SYNC_TIMEOUT_SECONDS), str(TARGET_BLOCK_NUMBER)]
-    ))
-
+    sync_utils.run_sync_test(plan, feeder_node, peer_node, SYNC_TIMEOUT_SECONDS, TARGET_BLOCK_NUMBER)
     plan.print("Juno from Pathfinder sync test completed")
