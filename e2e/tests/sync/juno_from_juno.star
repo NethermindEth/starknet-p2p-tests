@@ -1,5 +1,9 @@
 participants = import_module("../../clients/participants.star")
 
+# Test configuration
+SYNC_TIMEOUT_SECONDS = 600
+TARGET_BLOCK_NUMBER = 1000
+
 def run(plan):
     # Run the Juno feeder node
     feeder_node = participants.run_participant(plan, "juno-feeder", {
@@ -33,7 +37,7 @@ def run(plan):
     # Run the tester
     plan.print("Starting the sync tester...")
     plan.exec(tester_image.name, ExecRecipe(
-        ["node", "index.mjs", "http://" + peer_node.ip_address + ":6061", "120", "10"]
+        ["node", "index.mjs", "http://" + peer_node.ip_address + ":6061", str(SYNC_TIMEOUT_SECONDS), str(TARGET_BLOCK_NUMBER)]
     ))
 
     plan.print("Juno to Juno sync test completed")
