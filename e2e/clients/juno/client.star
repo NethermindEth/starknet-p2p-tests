@@ -1,7 +1,7 @@
 base = import_module("../common/base.star")
 
 def run(plan, name, participant):
-    image = participant.get("image", "nethermindeth/juno:p2p_all")
+    image = participant.get("image", "nethermind/juno:latest")
     is_feeder = participant.get("is_feeder", False)
     network = participant.get("network", "")  # Changed default to empty string
     private_key = participant.get("private_key", "")
