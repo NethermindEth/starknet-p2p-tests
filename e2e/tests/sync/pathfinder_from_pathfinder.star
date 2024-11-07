@@ -1,4 +1,10 @@
 participants = import_module("../../clients/participants.star")
+sync_utils = import_module("./sync_test_utils.star")
+
+# Test configuration
+SYNC_TIMEOUT_SECONDS = 3600
+TARGET_BLOCK_NUMBER = 1000
+RPC_PORT = 9545
 
 def run(plan):
     # Run the Pathfinder feeder node
@@ -16,21 +22,5 @@ def run(plan):
         "peer_multiaddrs": ["/ip4/" + feeder_node.ip_address + "/tcp/20002/p2p/12D3KooWFY6SaqJkRxJDepwvBi4Rw36iMUGZrejW69qkjYQQ2ydQ"]
     })
 
-    tester_image = plan.add_service(
-        "sync-tester",
-        config=ServiceConfig(
-            image=ImageBuildSpec(
-                image_name="sync-test",
-                build_context_dir="./../../tester",
-            ),
-        )
-    )
-
-    # Run the tester
-    plan.print("Starting the sync tester...")
-    plan.print("http://" + peer_node.ip_address + ":9545" + "/rpc/v0_7")
-    plan.exec(tester_image.name, ExecRecipe(
-        ["node", "index.mjs", "http://" + peer_node.ip_address + ":9545" + "/rpc/v0_7", "120", "10"]
-    ))
-
+    sync_utils.run_sync_test(plan, feeder_node, peer_node, RPC_PORT, SYNC_TIMEOUT_SECONDS, TARGET_BLOCK_NUMBER)
     plan.print("Pathfinder from Pathfinder sync test completed")

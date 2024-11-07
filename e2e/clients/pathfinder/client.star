@@ -8,6 +8,10 @@ def run(plan, name, participant):
     ethereum_url = participant.get("ethereum_url", "wss://sepolia.infura.io/ws/v3/2ba63046038749aeadc99d0520cdaecb")
     peer_multiaddrs = participant.get("peer_multiaddrs", [])
    
+    env_vars = {
+        "RUST_LOG": "debug"
+    }
+
     cmd = [
         "--network", "sepolia-testnet",
         "--p2p.listen-on", "/ip4/0.0.0.0/tcp/" + str(p2p_port),
@@ -41,4 +45,4 @@ def run(plan, name, participant):
         )
     }
 
-    return base.run(plan, name, image, cmd, ports, participant, files=files)
+    return base.run(plan, name, image, cmd, ports, participant, files=files, env_vars=env_vars)

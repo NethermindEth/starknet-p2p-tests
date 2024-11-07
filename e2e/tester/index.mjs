@@ -4,87 +4,89 @@ const node = new RpcProvider({ nodeUrl: process.argv[2] });
 const timeout = parseInt(process.argv[3], 10);
 const targetBlockNumber = parseInt(process.argv[4], 10);
 
-function log(message) {
-    process.stdout.write(`[${new Date().toISOString()}] ${message}\n`);
-}
+// Simple logging with timestamp
+const log = (message) => console.log(`[${new Date().toISOString()}] ${message}`);
 
-async function waitForNodeReady(maxAttempts = 30, interval = 10000) {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+// Constants for configuration
+const CONFIG = {
+    CHECK_INTERVAL: 10_000,  // 10 seconds
+    STALL_TIMEOUT: 5,        // 5 minutes
+    NODE_READY_ATTEMPTS: 5,
+    NODE_READY_INTERVAL: 5_000,
+};
+
+async function waitForNodeReady() {
+    for (let attempt = 1; attempt <= CONFIG.NODE_READY_ATTEMPTS; attempt++) {
         try {
-            await node.getBlockLatestAccepted();
-            log("✓ Node is ready");
+            const version = await node.getSpecVersion();
+            log(`✓ Node ready (v${version})`);
             return true;
-        } catch (error) {
-            log(`⧗ Waiting for node... (${attempt + 1}/${maxAttempts})`);
-            await new Promise(resolve => setTimeout(resolve, interval));
+        } catch {
+            log(`⧗ Waiting for node... (${attempt}/${CONFIG.NODE_READY_ATTEMPTS})`);
+            await new Promise(r => setTimeout(r, CONFIG.NODE_READY_INTERVAL));
         }
     }
-    log("✗ Node failed to become ready in time");
-    return false;
+    throw new Error("Node failed to become ready");
+}
+
+async function getCurrentBlock() {
+    try {
+        return await node.getBlockLatestAccepted();
+    } catch (error) {
+        if (error.message.includes("There are no blocks")) {
+            log("➜ Starting from genesis");
+            return { block_number: 0 };
+        }
+        throw error;
+    }
 }
 
 async function syncNode() {
-    log(`➜ Starting sync to target block ${targetBlockNumber}`);
-
-    if (!await waitForNodeReady()) {
-        process.exit(1);
-    }
-
     const startTime = Date.now();
-    let lastBlockTime = Date.now();
-    let lastBlockNumber;
+    let lastBlockTime = startTime;
+    let lastBlockNumber = (await getCurrentBlock()).block_number;
+    
+    log(`➜ Starting sync to block ${targetBlockNumber} from ${lastBlockNumber}`);
+    await waitForNodeReady();
 
-    try {
-        const startBlock = await node.getBlockLatestAccepted();
-        lastBlockNumber = startBlock.block_number;
-        log(`➜ Initial block: ${lastBlockNumber}`);
-    } catch (error) {
-        log(`✗ Failed to get initial block: ${error.message}`);
-        process.exit(1);
-    }
+    return new Promise((resolve, reject) => {
+        const interval = setInterval(async () => {
+            try {
+                const currentBlock = await getCurrentBlock();
+                const elapsedMinutes = (Date.now() - startTime) / 1000 / 60;
+                const blocksSynced = currentBlock.block_number - lastBlockNumber;
 
-    const checkSync = setInterval(async () => {
-        try {
-            const currentBlock = await node.getBlockLatestAccepted();
-            const elapsedMinutes = (Date.now() - startTime) / 1000 / 60;
-            const blocksSynced = currentBlock.block_number - lastBlockNumber;
-            
-            // Update progress
-            if (currentBlock.block_number > lastBlockNumber) {
-                const speed = blocksSynced / elapsedMinutes;
-                log(`↑ Block ${currentBlock.block_number} | +${blocksSynced} blocks | ${elapsedMinutes.toFixed(1)}m | ${speed.toFixed(1)} blocks/min`);
-                lastBlockNumber = currentBlock.block_number;
-                lastBlockTime = Date.now();
+                // Progress update
+                if (currentBlock.block_number > lastBlockNumber) {
+                    const speed = blocksSynced / elapsedMinutes;
+                    log(`↑ Block ${currentBlock.block_number} | +${blocksSynced} | ${speed.toFixed(1)} blocks/min`);
+                    lastBlockNumber = currentBlock.block_number;
+                    lastBlockTime = Date.now();
+                }
+
+                // Check completion or failure conditions
+                if (currentBlock.block_number >= targetBlockNumber) {
+                    log(`✓ Sync completed in ${elapsedMinutes.toFixed(1)}m`);
+                    clearInterval(interval);
+                    resolve();
+                } else if ((Date.now() - lastBlockTime) / 1000 / 60 >= CONFIG.STALL_TIMEOUT) {
+                    throw new Error(`Sync stalled for ${CONFIG.STALL_TIMEOUT}m`);
+                } else if (Date.now() - startTime > timeout * 1000) {
+                    throw new Error(`Sync timeout after ${timeout}s`);
+                }
+            } catch (error) {
+                clearInterval(interval);
+                reject(error);
             }
-
-            // Check completion
-            if (currentBlock.block_number >= targetBlockNumber) {
-                const totalMinutes = (Date.now() - startTime) / 1000 / 60;
-                log(`\n✓ Sync completed in ${totalMinutes.toFixed(1)} minutes`);
-                clearInterval(checkSync);
-                process.exit(0);
-            }
-
-            // Check timeouts
-            const noProgressTime = (Date.now() - lastBlockTime) / 1000 / 60;
-            if (noProgressTime >= 5) {
-                log(`\n✗ Sync stalled - No progress for ${noProgressTime.toFixed(1)} minutes`);
-                clearInterval(checkSync);
-                process.exit(1);
-            }
-
-            if (Date.now() - startTime > timeout * 1000) {
-                log(`\n✗ Sync timeout after ${timeout} seconds`);
-                clearInterval(checkSync);
-                process.exit(1);
-            }
-        } catch (error) {
-            log(`! Error checking sync: ${error.message}`);
-        }
-    }, 10000);
+        }, CONFIG.CHECK_INTERVAL);
+    });
 }
 
-syncNode().catch(error => {
-    log(`✗ Fatal error: ${error.message}`);
-    process.exit(1);
-});
+// Main execution
+syncNode()
+    .then(() => process.exit(0))
+    .catch(error => {
+        log(`✗ Error: ${error.message}`);
+        process.exit(1);
+    });
+

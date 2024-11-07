@@ -1,4 +1,4 @@
-def execute_sync_test(plan, peer_node, sync_timeout_seconds, target_block_number):
+def execute_sync_test(plan, peer_node, rpc_port, sync_timeout_seconds, target_block_number):
     """
     Executes the sync test against a peer node:
     1. Creates a tester service
@@ -17,8 +17,9 @@ def execute_sync_test(plan, peer_node, sync_timeout_seconds, target_block_number
     )
 
     plan.print("Starting the sync tester...")
+    # Use the correct RPC port in the URL
     plan.exec(tester_service.name, ExecRecipe(
-        ["node", "index.mjs", "http://" + peer_node.ip_address + ":6061", str(sync_timeout_seconds), str(target_block_number)]
+        ["node", "index.mjs", "http://" + peer_node.ip_address + ":" + str(rpc_port), str(sync_timeout_seconds), str(target_block_number)]
     ))
 
 def cleanup_services(plan):
@@ -33,11 +34,11 @@ def cleanup_services(plan):
             description="Removing service " + service.name
         )
 
-def run_sync_test(plan, feeder_node, peer_node, sync_timeout_seconds, target_block_number):
+def run_sync_test(plan, feeder_node, peer_node, rpc_port, sync_timeout_seconds, target_block_number):
     """
     Orchestrates the complete sync test process:
     1. Executes the sync test
     2. Cleans up all services
     """
-    execute_sync_test(plan, peer_node, sync_timeout_seconds, target_block_number)
+    execute_sync_test(plan, peer_node, rpc_port, sync_timeout_seconds, target_block_number)
     cleanup_services(plan) 
