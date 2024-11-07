@@ -1,5 +1,10 @@
 import { RpcProvider } from "starknet";
 
+if (!process.argv[2]) {
+    console.error("Error: Node URL is required");
+    process.exit(1);
+}
+
 const node = new RpcProvider({ nodeUrl: process.argv[2] });
 const timeout = parseInt(process.argv[3], 10);
 const targetBlockNumber = parseInt(process.argv[4], 10);
@@ -56,10 +61,11 @@ async function syncNode() {
                 const elapsedMinutes = (Date.now() - startTime) / 1000 / 60;
                 const blocksSynced = currentBlock.block_number - lastBlockNumber;
 
-                // Progress update
+                // Progress update with completion percentage
                 if (currentBlock.block_number > lastBlockNumber) {
                     const speed = blocksSynced / elapsedMinutes;
-                    log(`↑ Block ${currentBlock.block_number} | +${blocksSynced} | ${speed.toFixed(1)} blocks/min`);
+                    const progress = ((currentBlock.block_number / targetBlockNumber) * 100).toFixed(1);
+                    log(`↑ Block ${currentBlock.block_number} | ${progress}% | ${speed.toFixed(1)} blocks/min`);
                     lastBlockNumber = currentBlock.block_number;
                     lastBlockTime = Date.now();
                 }
