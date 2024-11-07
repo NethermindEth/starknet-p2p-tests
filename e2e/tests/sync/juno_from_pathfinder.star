@@ -4,6 +4,7 @@ sync_utils = import_module("./sync_test_utils.star")
 # Test configuration
 SYNC_TIMEOUT_SECONDS = 1800
 TARGET_BLOCK_NUMBER = 1000
+RPC_PORT = 6061
 
 def run(plan):
     # Run the Pathfinder as feeder node
@@ -23,5 +24,5 @@ def run(plan):
         "network": "sepolia",
     })
 
-    sync_utils.run_sync_test(plan, feeder_node, peer_node, SYNC_TIMEOUT_SECONDS, TARGET_BLOCK_NUMBER)
+    sync_utils.run_sync_test(plan, feeder_node, peer_node, RPC_PORT, SYNC_TIMEOUT_SECONDS, TARGET_BLOCK_NUMBER)
     plan.print("Juno from Pathfinder sync test completed")
