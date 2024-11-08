@@ -18,7 +18,7 @@ This project contains end-to-end (E2E) tests for peer-to-peer (P2P) syncing with
 To run the E2E tests, use the following command:
 
 ```
-kurtosis run .
+kurtosis run . --main-function-name run_juno_from_juno_sync 
 ```
 
 ## Cleaning Up
