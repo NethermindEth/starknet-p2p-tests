@@ -2,8 +2,8 @@ participants = import_module("../../clients/participants.star")
 sync_utils = import_module("./sync_test_utils.star")
 
 # Test configuration
-SYNC_TIMEOUT_SECONDS = 120
-TARGET_BLOCK_NUMBER = 10
+SYNC_TIMEOUT_SECONDS = 1800
+TARGET_BLOCK_NUMBER = 1000
 RPC_PORT = 9545
 
 def run(plan):

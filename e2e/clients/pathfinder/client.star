@@ -18,15 +18,24 @@ def run(plan, name, participant):
         "--debug.restart-delay", "5",
         "--debug.pretty-log", "true",
         "--rpc.enable", "true",
-        "--ethereum.url", ethereum_url
+        "--ethereum.url", ethereum_url,
+        "--p2p.experimental.l1-checkpoint-override-json-path", "/checkpoint/l1_checkpoint.json"
     ]
 
     files = {}
+    l1_checkpoint_artifact = plan.upload_files(
+        src="l1_checkpoint.json", 
+        name="pathfinder_l1_checkpoint_" + name
+    )
+    files["/checkpoint/"] = l1_checkpoint_artifact
     if is_feeder:
-        identity_artifact = plan.upload_files(src="identity.json", name="pathfinder_identity")
-        files["/app/"] = identity_artifact
+        identity_artifact = plan.upload_files(
+            src="identity.json", 
+            name="pathfinder_identity_" + name
+        )
+        files["/identity/"] = identity_artifact
         cmd.extend([
-            "--p2p.identity-config-file", "/app/identity.json",
+            "--p2p.identity-config-file", "/identity/identity.json",
             "--p2p.proxy", "true"
         ])
 
