@@ -15,10 +15,23 @@ This project contains end-to-end (E2E) tests for peer-to-peer (P2P) syncing with
 
 ## Running the Tests
 
-To run the E2E tests, use the following command:
+To run the E2E tests, you can use the following commands depending on which sync configuration you want to test:
 
-```
-kurtosis run . --main-function-name run_juno_from_juno_sync 
+```bash
+# Juno syncing from Juno
+kurtosis run . --main-function-name run_juno_from_juno_sync
+
+# Juno syncing from Pathfinder
+kurtosis run . --main-function-name run_juno_from_pathfinder_sync
+
+# Pathfinder syncing from Pathfinder
+kurtosis run . --main-function-name run_pathfinder_from_pathfinder_sync
+
+# Pathfinder syncing from Juno
+kurtosis run . --main-function-name run_pathfinder_from_juno_sync
+
+# Run devnet network
+kurtosis run . --main-function-name run_devnet_network
 ```
 
 ## Cleaning Up
