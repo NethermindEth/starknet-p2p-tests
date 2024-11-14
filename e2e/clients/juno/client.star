@@ -1,9 +1,9 @@
 base = import_module("../common/base.star")
 
 def run(plan, name, participant):
-    image = participant.get("image", "nethermind/juno:latest")
+    image = participant.get("image", "nethermindeth/juno:fixed-p2p-sync")
     is_feeder = participant.get("is_feeder", False)
-    network = participant.get("network", "")  # Changed default to empty string
+    network = participant.get("network", "")
     private_key = participant.get("private_key", "")
     http_port = participant.get("http_port", 6060)
     p2p_port = participant.get("p2p_port", 7777)
@@ -15,7 +15,11 @@ def run(plan, name, participant):
         "--http-host", "0.0.0.0",
         "--log-level", "debug",
         "--db-path", "/var/lib/juno",
+        "--disable-l1-verification"
     ]
+
+    if network:
+        cmd.extend(["--network", network])
 
     # Add P2P args only if we're in P2P mode
     if is_feeder or peer_multiaddrs:
@@ -25,8 +29,6 @@ def run(plan, name, participant):
             "--p2p-private-key", private_key
         ])
         
-        if network:
-            cmd.extend(["--network", network])
         if is_feeder:
             cmd.append("--p2p-feeder-node")
         for peer_multiaddr in peer_multiaddrs:

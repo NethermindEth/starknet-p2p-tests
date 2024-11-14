@@ -10,6 +10,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "starknet": "^6.11.0"
+    "starknet": "^6.11.0",
+    "node-fetch": "^3.3.0"
   }
 }
