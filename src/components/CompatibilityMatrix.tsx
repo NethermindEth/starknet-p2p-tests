@@ -25,7 +25,7 @@ export default function CompatibilityMatrix({ tests }: CompatibilityMatrixProps)
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-4">Compatibility Matrix</h2>
+      <h2 className="text-lg font-semibold text-gray-900 mb-4">P2P Sync Compatibility</h2>
       <div className="relative overflow-x-auto">
         <table className="w-full">
           <thead>
