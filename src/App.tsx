@@ -16,12 +16,12 @@ function App() {
       const data = JSON.parse(event.data);
       
       if (data.type === 'initial') {
-        setTests(data.data);
+        setTests(sortTestsByDate(data.data));
       } else if (data.type === 'newTest') {
-        setTests(prev => [data.data, ...prev]);
+        setTests(prev => sortTestsByDate([data.data, ...prev]));
       } else if (data.type === 'updateTest') {
-        setTests(prev => prev.map(test => 
-          test.id === data.data.id ? data.data : test
+        setTests(prev => sortTestsByDate(
+          prev.map(test => test.id === data.data.id ? data.data : test)
         ));
         if (selectedTest?.id === data.data.id) {
           setSelectedTest(data.data);
@@ -36,6 +36,12 @@ function App() {
 
     return () => eventSource.close();
   }, [selectedTest]);
+
+  const sortTestsByDate = (tests: TestRun[]) => {
+    return [...tests].sort((a, b) => 
+      new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
