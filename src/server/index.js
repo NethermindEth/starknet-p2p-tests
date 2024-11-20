@@ -50,66 +50,6 @@ function broadcastUpdate(data) {
   });
 }
 
-// Simulate new test runs
-function generateTestRun() {
-  const nodes = ['Juno', 'Pathfinder'];
-  const versions = {
-    Juno: ['v0.8.0', 'v0.7.9', 'v0.7.8'],
-    Pathfinder: ['v0.9.1', 'v0.9.0', 'v0.8.9']
-  };
-  
-  const sourceNode = nodes[Math.floor(Math.random() * nodes.length)];
-  const targetNode = nodes.find(n => n !== sourceNode);
-  
-  const sourceVersion = versions[sourceNode][Math.floor(Math.random() * versions[sourceNode].length)];
-  const targetVersion = versions[targetNode][Math.floor(Math.random() * versions[targetNode].length)];
-  
-  const status = Math.random() > 0.3 ? 'In Progress' : Math.random() > 0.5 ? 'Passed' : 'Failed';
-  
-  const testRun = {
-    id: Date.now().toString(),
-    sourceNode,
-    sourceVersion,
-    targetNode,
-    targetVersion,
-    status,
-    startTime: new Date().toISOString(),
-    blocksProcessed: status === 'In Progress' ? Math.floor(Math.random() * 1000) : Math.floor(Math.random() * 10000),
-    totalBlocks: 10000,
-    avgBlockTime: (Math.random() * 0.5 + 0.1).toFixed(3),
-    errors: status === 'Failed' ? ['Block hash mismatch at 1337', 'State root mismatch at 1338'] : []
-  };
-
-  testRuns.set(testRun.id, testRun);
-  broadcastUpdate({ type: 'newTest', data: testRun });
-  
-  // Update progress if in progress
-  if (status === 'In Progress') {
-    const interval = setInterval(() => {
-      const test = testRuns.get(testRun.id);
-      if (test && test.status === 'In Progress') {
-        test.blocksProcessed += Math.floor(Math.random() * 100);
-        if (test.blocksProcessed >= test.totalBlocks) {
-          test.status = Math.random() > 0.8 ? 'Failed' : 'Passed';
-          test.endTime = new Date().toISOString();
-          clearInterval(interval);
-        }
-        testRuns.set(test.id, test);
-        broadcastUpdate({ type: 'updateTest', data: test });
-      }
-    }, 2000);
-  }
-}
-
-// Generate new test every 10-30 seconds
-//setInterval(generateTestRun, Math.random() * 20000 + 10000);
-
-// Initial test runs
-for (let i = 0; i < 5; i++) {
-  //generateTestRun();
-}
-
-// Add this new endpoint after the existing endpoints
 app.post('/update', (req, res) => {
   const update = req.body;
   
