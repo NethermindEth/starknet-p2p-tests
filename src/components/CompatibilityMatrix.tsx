@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Ban } from 'lucide-react';
 import type { TestRun } from '../types';
 
 interface CompatibilityMatrixProps {
@@ -7,9 +7,14 @@ interface CompatibilityMatrixProps {
 }
 
 export default function CompatibilityMatrix({ tests }: CompatibilityMatrixProps) {
-  const nodes = ['Pathfinder', 'Juno'];
+  const nodes = ['Pathfinder', 'Juno', 'Madara', 'Papyrus'];
+  const availableNodes = ['Pathfinder', 'Juno'];
   
   const getLatestTestResult = (target: string, source: string) => {
+    if (!availableNodes.includes(target) || !availableNodes.includes(source)) {
+      return undefined;
+    }
+
     const latestTest = tests.find(test => 
       test.sourceNode === source && 
       test.targetNode === target &&
@@ -38,11 +43,13 @@ export default function CompatibilityMatrix({ tests }: CompatibilityMatrixProps)
               <tr key={targetNode}>
                 <td className="px-4 py-2 font-medium text-gray-700">{targetNode}</td>
                 {nodes.map(sourceNode => {
-                  const passed = getLatestTestResult(targetNode, sourceNode);
+                  const result = getLatestTestResult(targetNode, sourceNode);
                   return (
                     <td key={`${targetNode}-${sourceNode}`} className="px-4 py-2">
                       <div className="flex justify-center">
-                        {passed ? (
+                        {result === undefined ? (
+                          <Ban className="w-6 h-6 text-gray-300" />
+                        ) : result ? (
                           <CheckCircle2 className="w-6 h-6 text-green-500" />
                         ) : (
                           <XCircle className="w-6 h-6 text-red-500" />
