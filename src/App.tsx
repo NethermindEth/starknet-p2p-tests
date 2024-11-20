@@ -3,6 +3,7 @@ import { Activity } from 'lucide-react';
 import type { TestRun } from './types';
 import TestCard from './components/TestCard';
 import TestDetails from './components/TestDetails';
+import CompatibilityMatrix from './components/CompatibilityMatrix';
 
 function App() {
   const [tests, setTests] = useState<TestRun[]>([]);
@@ -50,6 +51,8 @@ function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <CompatibilityMatrix tests={tests} />
+        
         <div className="space-y-4">
           {tests.map(test => (
             <TestCard
