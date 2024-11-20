@@ -29,11 +29,11 @@ export default function TestCard({ test, onClick }: TestCardProps) {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <span className="font-semibold text-gray-700">{test.sourceNode}</span>
-          <span className="text-sm text-gray-500">{test.sourceVersion}</span>
-          <ArrowRight className="w-4 h-4 text-gray-400" />
           <span className="font-semibold text-gray-700">{test.targetNode}</span>
           <span className="text-sm text-gray-500">{test.targetVersion}</span>
+          <ArrowRight className="w-4 h-4 text-gray-400 rotate-180" />
+          <span className="font-semibold text-gray-700">{test.sourceNode}</span>
+          <span className="text-sm text-gray-500">{test.sourceVersion}</span>
         </div>
         <div className="flex items-center space-x-2">
           {statusIcons[test.status]}
