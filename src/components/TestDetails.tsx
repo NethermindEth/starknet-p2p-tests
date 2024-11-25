@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, CheckCircle2, XCircle, Clock, ArrowRight } from 'lucide-react';
+import { X, CheckCircle2, XCircle, Clock, ArrowLeft } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import type { TestRun } from '../types';
 
@@ -32,13 +32,13 @@ export default function TestDetails({ test, onClose }: TestDetailsProps) {
           <div className="mt-6 space-y-6">
             <div className="flex items-center justify-center space-x-4">
               <div className="text-center">
-                <div className="font-semibold text-lg">{test.sourceNode}</div>
-                <div className="text-sm text-gray-500">{test.sourceVersion}</div>
-              </div>
-              <ArrowRight className="w-6 h-6 text-gray-400" />
-              <div className="text-center">
                 <div className="font-semibold text-lg">{test.targetNode}</div>
                 <div className="text-sm text-gray-500">{test.targetVersion}</div>
+              </div>
+              <ArrowLeft className="w-6 h-6 text-gray-400" />
+              <div className="text-center">
+                <div className="font-semibold text-lg">{test.sourceNode}</div>
+                <div className="text-sm text-gray-500">{test.sourceVersion}</div>
               </div>
             </div>
 
