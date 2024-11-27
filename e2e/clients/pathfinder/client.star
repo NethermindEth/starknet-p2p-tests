@@ -5,7 +5,7 @@ def run(plan, name, participant):
     is_feeder = participant.get("is_feeder", False)
     p2p_port = participant.get("p2p_port", 20002)
     rpc_port = 9545  # Fixed RPC port, hardcoded in Pathfinder Dockerfile and not configurable
-    ethereum_url = participant.get("ethereum_url", "wss://sepolia.infura.io/ws/v3/2ba63046038749aeadc99d0520cdaecb")
+    ethereum_url = participant.get("ethereum_url", "wss://sepolia.infura.io/ws/v3/9bcce38679e14b5680dad462eb2c2b91")
     peer_multiaddrs = participant.get("peer_multiaddrs", [])
    
     env_vars = {
@@ -19,7 +19,8 @@ def run(plan, name, participant):
         "--debug.pretty-log", "true",
         "--rpc.enable", "true",
         "--ethereum.url", ethereum_url,
-        "--p2p.experimental.l1-checkpoint-override-json-path", "/checkpoint/l1_checkpoint.json"
+        "--p2p.experimental.l1-checkpoint-override-json-path", "/checkpoint/l1_checkpoint.json",
+        "--p2p.experimental.kad-name", "/starknet/kad/1.0.0",
     ]
 
     files = {}
@@ -40,7 +41,7 @@ def run(plan, name, participant):
         ])
 
     for peer_multiaddr in peer_multiaddrs:
-        cmd.extend(["--p2p.bootstrap-addresses", peer_multiaddr])
+        cmd.extend(["--p2p.predefined-peers", peer_multiaddr])
 
     ports = {
         "p2p": PortSpec(

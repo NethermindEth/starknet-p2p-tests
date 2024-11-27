@@ -1,7 +1,7 @@
 base = import_module("../common/base.star")
 
 def run(plan, name, participant):
-    image = participant.get("image", "nethermind/juno:latest")
+    image = participant.get("image", "ankushindaniil/juno:proto-upgrade")
     is_feeder = participant.get("is_feeder", False)
     network = participant.get("network", "")  # Changed default to empty string
     private_key = participant.get("private_key", "")
@@ -15,6 +15,7 @@ def run(plan, name, participant):
         "--http-host", "0.0.0.0",
         "--log-level", "debug",
         "--db-path", "/var/lib/juno",
+        "--disable-l1-verification",
     ]
 
     # Add P2P args only if we're in P2P mode

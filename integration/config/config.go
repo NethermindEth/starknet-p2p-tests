@@ -15,7 +15,7 @@ var (
 )
 
 func init() {
-	TargetPeerAddress = getEnv("TARGET_PEER_ADDRESS", "/ip4/127.0.0.1/tcp/7777/p2p/12D3KooWLBUjEPyTiACzQZ3K1oqBXRqHwRFvAUHrm561pWWbJkYf")
+	TargetPeerAddress = getEnv("TARGET_PEER_ADDRESS", "/ip4/192.168.64.1/tcp/7777/p2p/12D3KooWLdURCjbp1D7hkXWk6ZVfcMDPtsNnPHuxoTcWXFtvrxGG")
 	timeoutStr := getEnv("DEFAULT_TEST_TIMEOUT", "300s")
 	var err error
 	DefaultTestTimeout, err = time.ParseDuration(timeoutStr)
