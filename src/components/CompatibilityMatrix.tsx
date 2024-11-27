@@ -30,7 +30,11 @@ export default function CompatibilityMatrix({ tests }: CompatibilityMatrixProps)
         <table className="w-full">
           <thead>
             <tr>
-              <th className="px-4 py-2 w-32"></th>
+              <th className="px-4 py-2 w-32">
+                <div className="text-sm text-gray-500">
+                  To ↓ / From →
+                </div>
+              </th>
               {nodes.map(node => (
                 <th key={node} className="px-4 py-2 font-medium text-gray-700 text-center">
                   {node}
