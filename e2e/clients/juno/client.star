@@ -15,6 +15,7 @@ def run(plan, name, participant):
         "--http-host", "0.0.0.0",
         "--log-level", "debug",
         "--db-path", "/var/lib/juno",
+        "--disable-l1-verification"
     ]
 
     # Add P2P args only if we're in P2P mode
