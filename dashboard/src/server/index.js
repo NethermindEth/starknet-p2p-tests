@@ -3,9 +3,29 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import pg from 'pg';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
 
 // Load environment variables from .env file
 dotenv.config();
+
+// Create rate limiters
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.'
+});
+
+const eventsLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 30, // Limit each IP to 30 requests per windowMs
+  message: 'Too many connection attempts, please try again later.'
+});
+
+const staticLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 200, // Limit each IP to 200 requests per minute
+  message: 'Too many requests, please try again later.'
+});
 
 const { Pool } = pg;
 
@@ -89,8 +109,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Modified SSE endpoint
-app.get('/events', async (req, res) => {
+// Modified SSE endpoint with rate limiting
+app.get('/events', eventsLimiter, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -108,7 +128,7 @@ app.get('/events', async (req, res) => {
 });
 
 // Serve index.html for all routes
-app.get('*', (req, res) => {
+app.get('*', staticLimiter, (req, res) => {
   res.sendFile(join(__dirname, '../../dist/index.html'));
 });
 
@@ -118,8 +138,8 @@ function broadcastUpdate(data) {
   });
 }
 
-// Modified update endpoint
-app.post('/update', async (req, res) => {
+// Modified update endpoint with rate limiting
+app.post('/update', apiLimiter, async (req, res) => {
   const update = req.body;
   
   try {
