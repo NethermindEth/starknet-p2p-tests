@@ -28,11 +28,11 @@ export default function TestCard({ test, onClick }: TestCardProps) {
   };
 
   const formatSyncSummary = () => {
-    if (!test.endTime) return '';
+    const endTimeDate = test.endTime ? new Date(test.endTime) : new Date(test.startTime);
     
     const duration = intervalToDuration({
       start: new Date(test.startTime),
-      end: new Date(test.endTime)
+      end: endTimeDate
     });
 
     const formatTime = () => {
@@ -40,10 +40,12 @@ export default function TestCard({ test, onClick }: TestCardProps) {
       if (duration.days) parts.push(`${duration.days}d`);
       if (duration.hours) parts.push(`${duration.hours}h`);
       if (duration.minutes) parts.push(`${duration.minutes}m`);
+      if (duration.seconds && parts.length === 0) parts.push(`${duration.seconds}s`);
+      if (parts.length === 0) parts.push('1s');
       return parts.join(' ');
     };
 
-    return `Synced ${test.totalBlocks.toLocaleString()} blocks within ${formatTime()}`;
+    return `${test.totalBlocks.toLocaleString()} blocks in ${formatTime()}`;
   };
 
   return (
@@ -62,9 +64,13 @@ export default function TestCard({ test, onClick }: TestCardProps) {
         </div>
         <div className="flex items-center space-x-2">
           {statusIcons[test.status]}
-          <span className="text-sm font-medium text-gray-600">
-            {formatDistanceToNow(new Date(test.startTime), { addSuffix: true })}
-          </span>
+          {(test.status === 'Passed' || test.status === 'Failed') ? (
+            <span className="text-sm font-medium text-gray-600">{formatSyncSummary()}</span>
+          ) : (
+            <span className="text-sm font-medium text-gray-600">
+              {formatDistanceToNow(new Date(test.startTime), { addSuffix: true })}
+            </span>
+          )}
         </div>
       </div>
       
@@ -80,12 +86,6 @@ export default function TestCard({ test, onClick }: TestCardProps) {
             <span>{test.blocksProcessed.toLocaleString()} / {test.totalBlocks.toLocaleString()} blocks</span>
             <span>{calculateSyncSpeed()} blocks/sec</span>
           </div>
-        </div>
-      )}
-
-      {(test.status === 'Passed' || test.status === 'Failed') && (
-        <div className="mt-2 text-sm text-gray-600">
-          {formatSyncSummary()}
         </div>
       )}
     </div>
