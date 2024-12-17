@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Activity } from 'lucide-react';
 import type { TestRun } from './types';
 import TestCard from './components/TestCard';
