@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle2, XCircle, Ban } from 'lucide-react';
 import type { TestRun } from '../types';
 
