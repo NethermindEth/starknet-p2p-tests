@@ -1,8 +1,8 @@
 import express from 'express';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
 import pg from 'pg';
 import rateLimit from 'express-rate-limit';
+
+const { Pool } = pg;
 
 // Create rate limiters
 const apiLimiter = rateLimit({
@@ -16,17 +16,6 @@ const eventsLimiter = rateLimit({
   max: 30, // Limit each IP to 30 requests per windowMs
   message: 'Too many connection attempts, please try again later.'
 });
-
-const staticLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 200, // Limit each IP to 200 requests per minute
-  message: 'Too many requests, please try again later.'
-});
-
-const { Pool } = pg;
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // First create a connection pool to 'postgres' database to create our database if needed
 const initialPool = new Pool({
@@ -53,6 +42,13 @@ const appPool = new Pool({
     rejectUnauthorized: false
   }
 });
+
+
+console.log('pg user', process.env.POSTGRES_USER);
+console.log('pg host', process.env.POSTGRES_HOST);
+console.log('pg db', process.env.POSTGRES_DB);
+console.log('pg pw', process.env.POSTGRES_PW);
+console.log('appPool', appPool);
 
 // Create database and table if they don't exist
 async function initializeDatabase() {
@@ -92,13 +88,9 @@ const PORT = 3322;
 
 const clients = new Set();
 
-// Serve static files from the dist directory
-app.use(express.static(join(__dirname, '../../dist')));
-
-app.use(express.json());
 
 // Enable CORS
-app.use((req, res, next) => {
+app.use((_, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -107,6 +99,7 @@ app.use((req, res, next) => {
 
 // Modified SSE endpoint with rate limiting
 app.get('/events', eventsLimiter, async (req, res) => {
+  console.log('New connection');
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
@@ -124,9 +117,6 @@ app.get('/events', eventsLimiter, async (req, res) => {
 });
 
 // Serve index.html for all routes
-app.get('*', staticLimiter, (req, res) => {
-  res.sendFile(join(__dirname, '../../dist/index.html'));
-});
 
 function broadcastUpdate(data) {
   clients.forEach(client => {
@@ -160,3 +150,9 @@ initializeDatabase().then(() => {
     console.log(`Server running on port ${PORT}`);
   });
 });
+
+export default async function handler(req, res) {
+  console.log('API request', req.url);
+  console.log('API method', req.method);
+  await app(req, res);
+}
