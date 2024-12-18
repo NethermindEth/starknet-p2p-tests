@@ -4,7 +4,8 @@ sync_utils = import_module("./sync_test_utils.star")
 # Test configuration
 SYNC_TIMEOUT_SECONDS = 1800
 TARGET_BLOCK_NUMBER = 1000
-RPC_PORT = 6061
+SOURCE_RPC_PORT = 9545
+TARGET_RPC_PORT = 6060
 
 def run(plan):
     # Run the Pathfinder as feeder node
@@ -12,6 +13,7 @@ def run(plan):
         "type": "pathfinder",
         "is_feeder": True,
         "p2p_port": 20002,
+        "http_port": SOURCE_RPC_PORT,
     })
 
     # Run the juno peer node with the feeder node as a peer
@@ -19,10 +21,18 @@ def run(plan):
         "type": "juno",
         "is_feeder": False,
         "private_key": "a5a938ae6f012390fd68a10d3dd91038334fe5f0ed1c96753a3ee7bf0e8f1314e39307aea916c94e2d07e616fa20e315f4625c4f1e598ba2cc589410cc9c5cda",
-        "http_port": 6061,
+        "http_port": TARGET_RPC_PORT,
         "peer_multiaddrs": ["/ip4/" + feeder_node.ip_address + "/tcp/20002/p2p/12D3KooWFY6SaqJkRxJDepwvBi4Rw36iMUGZrejW69qkjYQQ2ydQ"],
         "network": "sepolia",
     })
 
-    sync_utils.run_sync_test(plan, feeder_node, peer_node, RPC_PORT, SYNC_TIMEOUT_SECONDS, TARGET_BLOCK_NUMBER)
+    sync_utils.run_sync_test(
+        plan,
+        feeder_node,
+        peer_node,
+        SOURCE_RPC_PORT,
+        TARGET_RPC_PORT,
+        SYNC_TIMEOUT_SECONDS,
+        TARGET_BLOCK_NUMBER
+    )
     plan.print("Juno from Pathfinder sync test completed")

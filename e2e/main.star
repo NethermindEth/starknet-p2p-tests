@@ -15,6 +15,3 @@ def run_pathfinder_from_juno_sync(plan):
 
 def run_pathfinder_from_pathfinder_sync(plan):
     return pathfinder_from_pathfinder.run(plan)
-
-def run_devnet_network(plan):
-    return devnet_network.run(plan)
