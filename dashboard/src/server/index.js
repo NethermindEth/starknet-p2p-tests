@@ -2,11 +2,7 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import pg from 'pg';
-import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
-
-// Load environment variables from .env file
-dotenv.config();
 
 // Create rate limiters
 const apiLimiter = rateLimit({
@@ -37,7 +33,7 @@ const initialPool = new Pool({
   user: process.env.POSTGRES_USER,
   host: process.env.POSTGRES_HOST,
   database: 'postgres', // Connect to default postgres database first
-  password: process.env.POSTGRES_PASSWORD,
+  password: process.env.POSTGRES_PW,
   port: process.env.POSTGRES_PORT || 5432,
   ssl: {
     require: true,
@@ -50,7 +46,7 @@ const appPool = new Pool({
   user: process.env.POSTGRES_USER,
   host: process.env.POSTGRES_HOST,
   database: process.env.POSTGRES_DB,
-  password: process.env.POSTGRES_PASSWORD,
+  password: process.env.POSTGRES_PW,
   port: process.env.POSTGRES_PORT || 5432,
   ssl: {
     require: true,
