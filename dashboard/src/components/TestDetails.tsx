@@ -1,6 +1,5 @@
-import React from 'react';
 import { X, CheckCircle2, XCircle, Clock, ArrowLeft } from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
+import { format } from 'date-fns';
 import type { TestRun } from '../types';
 
 interface TestDetailsProps {
