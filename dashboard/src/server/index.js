@@ -90,6 +90,9 @@ async function initializeDatabase() {
 const app = express();
 const PORT = 3322;
 
+// Trust proxy - required for express-rate-limit to work correctly behind a proxy
+app.set('trust proxy', 1);
+
 const clients = new Set();
 
 // Serve static files from the dist directory
