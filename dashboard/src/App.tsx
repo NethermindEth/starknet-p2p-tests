@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Activity } from 'lucide-react';
 import type { TestRun } from './types';
 import TestCard from './components/TestCard';
@@ -42,6 +42,27 @@ function App() {
       new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
     );
   };
+
+  // Fetch initial data when selectedTest is null
+  useEffect(() => {
+    if (selectedTest === null) {
+      fetch('/events')
+        .then(response => response.text())
+        .then(text => {
+          const lines = text.split('\n\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const eventData = JSON.parse(line.slice(6));
+              if (eventData.type === 'initial') {
+                setTests(sortTestsByDate(eventData.data));
+                break;
+              }
+            }
+          }
+        })
+        .catch(error => console.error('Error fetching initial data:', error));
+    }
+  }, [selectedTest]);
 
   return (
     <div className="min-h-screen bg-gray-50">
