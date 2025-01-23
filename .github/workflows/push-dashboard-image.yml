@@ -40,6 +40,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./dashboard
+          push: true
           platforms: "linux/amd64"
           tags: |
             ${{ env.DOCKER_REGISTRY }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ env.DOCKER_IMAGE_TAG }}
