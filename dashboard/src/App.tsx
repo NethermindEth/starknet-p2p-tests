@@ -10,11 +10,13 @@ function App() {
   const [selectedTest, setSelectedTest] = useState<TestRun | null>(null);
 
   useEffect(() => {
-    const eventSource = new EventSource('/events');
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const host = window.location.host;
+    const eventSource = new EventSource(`${protocol}//${host}/events`);
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      
+
       if (data.type === 'initial') {
         setTests(sortTestsByDate(data.data));
       } else if (data.type === 'newTest') {
@@ -38,7 +40,7 @@ function App() {
   }, [selectedTest]);
 
   const sortTestsByDate = (tests: TestRun[]) => {
-    return [...tests].sort((a, b) => 
+    return [...tests].sort((a, b) =>
       new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
     );
   };
@@ -79,7 +81,7 @@ function App() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <CompatibilityMatrix tests={tests} />
-        
+
         <div className="space-y-4">
           {tests.map(test => (
             <TestCard

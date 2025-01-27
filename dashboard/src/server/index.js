@@ -100,11 +100,22 @@ app.use(express.static(join(__dirname, '../../dist')));
 
 app.use(express.json());
 
-// Enable CORS
+// Enable CORS and security headers
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Instead of wildcard, use the actual origin
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  // Add security headers
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+
   next();
 });
 
@@ -113,6 +124,9 @@ app.get('/events', eventsLimiter, async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+
+  // Add additional headers for SSE over HTTPS
+  res.setHeader('X-Accel-Buffering', 'no'); // Disable proxy buffering
 
   try {
     const result = await appPool.query('SELECT data FROM test_runs');
@@ -140,7 +154,7 @@ function broadcastUpdate(data) {
 // Modified update endpoint with rate limiting
 app.post('/update', apiLimiter, async (req, res) => {
   const update = req.body;
-  
+
   try {
     if (update.type === 'newTest' || update.type === 'updateTest') {
       await appPool.query(
@@ -148,7 +162,7 @@ app.post('/update', apiLimiter, async (req, res) => {
         [update.data.id, update.data]
       );
     }
-    
+
     broadcastUpdate(update);
     res.sendStatus(200);
   } catch (error) {
