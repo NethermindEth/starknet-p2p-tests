@@ -24,5 +24,5 @@ jobs:
           kurtosis run . --main-function-name run_juno_from_juno_sync 
           kurtosis run . --main-function-name run_juno_from_pathfinder_sync 
           kurtosis run . --main-function-name run_pathfinder_from_pathfinder_sync 
-          # kurtosis run . --main-function-name run_pathfinder_from_juno_sync
+          kurtosis run . --main-function-name run_pathfinder_from_juno_sync
           kurtosis clean --all
