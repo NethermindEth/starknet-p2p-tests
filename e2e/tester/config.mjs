@@ -7,7 +7,7 @@ export const SYNC_CONFIG = {
 
 export const REPORTING_CONFIG = {
     enabled: true,
-    endpoint: 'https://starknet-p2p-testing-dashboard.onrender.com/update',
+    endpoint: 'https://p2p-dashboard.voyager.nethermind.io/update',
     testId: Date.now().toString(),
 };
 
