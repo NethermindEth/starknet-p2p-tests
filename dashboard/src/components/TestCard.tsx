@@ -27,8 +27,11 @@ export default function TestCard({ test, onClick }: TestCardProps) {
   };
 
   const formatSyncSummary = () => {
-    const endTimeDate = test.endTime ? new Date(test.endTime) : new Date();
-    
+    if (!test.endTime) {
+      return `${test.totalBlocks.toLocaleString()} blocks in N/A`;
+    }
+
+    const endTimeDate = new Date(test.endTime);
     const duration = intervalToDuration({
       start: new Date(test.startTime),
       end: endTimeDate

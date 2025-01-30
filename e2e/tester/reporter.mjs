@@ -15,6 +15,7 @@ export class TestReporter {
         if (!this.config.enabled) return;
 
         try {
+            const status = this._getStatus(blockNumber, errors);
             const payload = {
                 type: "updateTest",
                 data: {
@@ -23,7 +24,7 @@ export class TestReporter {
                     sourceVersion: this.config.sourceNode.version,
                     targetNode: this.config.targetNode.type,
                     targetVersion: this.config.targetNode.version,
-                    status: this._getStatus(blockNumber, errors),
+                    status: status,
                     startTime: new Date(startTime).toISOString(),
                     blocksProcessed: blockNumber,
                     totalBlocks: this.config.targetBlockNumber,
@@ -31,6 +32,11 @@ export class TestReporter {
                     errors
                 }
             };
+
+            // Add endTime if the test is completed
+            if (status === "Passed" || status === "Failed") {
+                payload.data.endTime = new Date().toISOString();
+            }
 
             const response = await fetch(this.config.endpoint, {
                 method: 'POST',
