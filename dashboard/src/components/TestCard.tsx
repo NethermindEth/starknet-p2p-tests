@@ -27,7 +27,7 @@ export default function TestCard({ test, onClick }: TestCardProps) {
   };
 
   const formatSyncSummary = () => {
-    const endTimeDate = test.endTime ? new Date(test.endTime) : new Date(test.startTime);
+    const endTimeDate = test.endTime ? new Date(test.endTime) : new Date();
     
     const duration = intervalToDuration({
       start: new Date(test.startTime),
@@ -39,8 +39,8 @@ export default function TestCard({ test, onClick }: TestCardProps) {
       if (duration.days) parts.push(`${duration.days}d`);
       if (duration.hours) parts.push(`${duration.hours}h`);
       if (duration.minutes) parts.push(`${duration.minutes}m`);
-      if (duration.seconds && parts.length === 0) parts.push(`${duration.seconds}s`);
-      if (parts.length === 0) parts.push('1s');
+      if (duration.seconds) parts.push(`${duration.seconds}s`);
+      if (parts.length === 0) parts.push('<1s');
       return parts.join(' ');
     };
 
